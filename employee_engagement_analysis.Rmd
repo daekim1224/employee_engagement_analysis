@@ -1,0 +1,166 @@
+---
+title: "employee_engagement_analysis"
+author: "Daehyeon (Dae) Kim"
+date: "2024-04-15"
+output: html_document : github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Overview of This Report
+Purpose: This report shows my data analysis of Hooli's employee enagement.
+
+This report is structured as follows: 
+
+* Data preparation 
+
+
+* Data preparation
+
+ - Loading Data
+```{r}
+library(readxl)
+df_original <- read_xlsx("data/Sr._People_Science_Analyst_Assignment_Dataset.xlsx")
+```
+ - Exaimining the loaded data at the macro-level
+  
+    -'lea_3' should be a numeric variable. After checking the data, employee ID M01562's response is only missing for 'lea_3'. Therefore, this 'N/A' should be recoded as -1. 
+  
+    - hiredate should be a date variable. But it is important to note that the current format is written as day/month/year. So I need to specify this in my code. 
+
+```{r}
+head(df_original)
+tail(df_original)
+
+str(df_original)
+
+df <- df_original
+
+table(df_original$lea_3)
+df[df$lea_3 == "N/A", ]
+df$lea_3[df$lea_3 == "N/A"] <- -1
+table(df$lea_3)
+df$lea_3 <- as.numeric(df$lea_3)
+
+df$hiredate <- as.Date(df$hiredate, format = "%d/%m/%Y")
+str(df)
+
+```
+
+
+  - Conducting Univariate Analysis
+    
+      - The presence of outliers, max value 99 for ali_1, ali_2, ali_3, col_1, col_2, col_3, lea_4. The value 99 is a value that is out of scale of -1 to 5. I discovered that all these responses come from Denmark. There seems to be a sampling error or coding error for responses from Denmark. Given that these are psychological measures, after going through the data dictionary, it doesn't make sense code 99 might denote an exceptional response out of -1 to 5 scale. Thus, I deem 99 as a coding error. Given that these employees are less than 1% of the population and that they completed the survey, I recode 99 to -1, the code for missing value. 
+    
+```{r}
+library(summarytools)
+dfSummary(df)
+
+#examine the responses of the employees who responsed 99 to one of these questions.
+df[df$ali_1 == 99, ] # other responses are in the normal scale range, 2 participants = M00238 & M00568
+df[df$ali_2 == 99, ] # except for ali_2 & lea_4, all the other responses are in the normal scale range, 1 participant = M01455
+df[df$ali_3 == 99, ] # other responses are in the normal scale range, 1 participant = M02319
+df[df$col_1 == 99, ] # other responses are in the normal scale range, 2 participants = M01339, M01843
+df[df$col_2 == 99, ] # other responses are in the normal scale range, 1 participant = M00168
+df[df$col_3 == 99, ] # other responses are in the normal scale range, 1 participant = M01393
+df[df$lea_3 == 99, ] # except fo lea_3, all the other responses are in the normal scale range, 1 participant = M01484
+df[df$lea_4 == 99, ] # except for ali_2 & lea_4, all the other responses are in the normal scale range, 1 participant = M01455
+
+# recode values with 99 to -1.
+
+df$ali_1[df$ali_1 == 99] <- -1
+df$ali_2[df$ali_2 == 99] <- -1
+df$ali_3[df$ali_3 == 99] <- -1
+df$col_1[df$col_1 == 99] <- -1
+df$col_2[df$col_2 == 99] <- -1
+df$col_3[df$col_3 == 99] <- -1
+df$lea_3[df$lea_3 == 99] <- -1
+df$lea_4[df$lea_4 == 99] <- -1
+
+dfSummary(df)
+
+```
+      - col_1, eng_2, inc_2, & inc_5 have 1 missing value each.It should be correctly coded as -1. 
+```{r}
+df[is.na(df$col_1), ] #for employee_ID M02429, only col_1 is missing. It should be coded as -1. 
+df[is.na(df$eng_2), ] #for employee_ID M01597, only eng_2 is missing. It should be coded as -1.
+df[is.na(df$inc_2), ] #for employee_ID M01481, only inc_2 is missing. It should be coded as -1.
+df[is.na(df$inc_5), ] #for employee_ID M01722, only inc_5 is missing. It should be coded as -1. 
+
+df$col_1[is.na(df$col_1)] <- -1
+df$eng_2[is.na(df$eng_2)] <- -1
+df$inc_2[is.na(df$inc_2)] <- -1
+df$inc_5[is.na(df$inc_5)] <- -1
+
+```
+        - for 'country' variable, UK & United Kingdom should be the same category. Similarly, USA & United States should be the same category. Let's collapse these categories together for each country. 
+```{r}
+
+table(df$country)
+df$country[df$country == "UK"] <- "United Kingdom"
+df$country[df$country == "USA"] <- "United States"
+table(df$country)
+
+```
+        - 40.2% of race variable's observations (1067) are missing. let's see if the values in this variable has patterns.
+Based on the contingency table below, 
+            - all employees in Australia have no information about their race. 
+            - 60/84 employees in Canada have no information about their race except 24 who are white.
+            - 55/60 employees in China have no information about their race except 5 who are white.
+            - 24/24 employees in Denmark have no information about their race.
+            - 48/47 employees in Germany have no information about their race. 
+            - 288/288 employees in India have no information about their race. 
+            - 355/359 employees in the United Kingdom have no information about their race.
+            - All employees in the United States have demographic information about race. 
+Except for the United States, all the countries with missing information about race are largely ethnically homogeneous. Therefore, the company might not collect information about employee's race as the variance in race among employees might be too small. For example, about 90.2 percent of the population in Australia are white. Therefore, I only conduct an analysis about race for the United States only. 
+```{r}
+table(df$race, useNA = "always")
+
+c_t <- table(df$race, df$country, useNA = "always")
+c_t
+
+```
+
+        - 38.7% of hiring date variable's observations (1025) are missing. 
+Based on the missmap graph, the patterns of missing values for hiredate and race variables seem randomly distributed. Let's examine if the missing values are truly randomly distributed or they follow certain patterns. 
+          
+```{r}
+df_2 <- subset(df, select = c(hiredate, race))
+library(Amelia)
+missmap(df_2)
+
+#the earliest & latest date for hiredate
+min(df$hiredate, na.rm = TRUE) # 2012-01-10
+max(df$hiredate, na.rm = TRUE) # 2022-12-06
+
+#let's create a new variable named hireyear 
+df$hireyear <- format(df$hiredate, "%Y")
+table(df$hireyear)
+
+#let's create a contingency table for hireyear and country 
+c_t <- table(df$hireyear, df$country, useNA = "always")
+addmargins(c_t)
+  ## Canada is missing 48/84 employees' hiredates
+  ## China is missing 60/60 employees' hiredates
+  ## United States is missing 917/1551 employees' hiredates
+  ## In total, 1025/2651 employees' hire dates are missing. 
+  ## I need to be careful about creating tenure groups for Canada, China, and the United States
+
+#let's create a contingency table for hireyear and age
+table(df$age, useNA = "always")
+c_t <- table(df$hireyear, df$age, useNA = "always")
+addmargins(c_t)
+  ## 60/147 is missing for 18-24 old = 40.8%
+  ## 469/1266 is missing for 25-34 old = 37%
+  ## 1/1 is missing for 28 old 
+  ## 296/795 is missing for 35-44 years old = 37%
+  ## 1/1 is missing for 39 old
+  ## 1/1 is missing for 42 old
+  ## 141/301 is missing for 45-54 = 46%
+  ## 43/78 is missing for 55-64 = 55%
+  ## 9/54 is missing for 65+ = 16%
+  ## 2 individuals have no age data.
+```
+
+     
