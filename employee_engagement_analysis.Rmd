@@ -49,9 +49,9 @@ str(df)
 ```
 
 
-  - Conducting Univariate Analysis
+  - Data pre-processing & Univariate Analysis
     
-      - The presence of outliers, max value 99 for ali_1, ali_2, ali_3, col_1, col_2, col_3, lea_4. The value 99 is a value that is out of scale of -1 to 5. I discovered that all these responses come from Denmark. There seems to be a sampling error or coding error for responses from Denmark. Given that these are psychological measures, after going through the data dictionary, it doesn't make sense code 99 might denote an exceptional response out of -1 to 5 scale. Thus, I deem 99 as a coding error. Given that these employees are less than 1% of the population and that they completed the survey, I recode 99 to -1, the code for missing value. 
+- The presence of outliers, max value 99 for ali_1, ali_2, ali_3, col_1, col_2, col_3, lea_4. The value 99 is a value that is out of scale of -1 to 5. I discovered that all these responses come from Denmark. There seems to be a sampling error or coding error for responses from Denmark. Given that these are psychological measures, after going through the data dictionary, it doesn't make sense code 99 might denote an exceptional response out of -1 to 5 scale. Thus, I deem 99 as a coding error. Given that these employees are less than 1% of the population and that they completed the survey, I recode 99 to -1, the code for missing value. 
     
 ```{r}
 library(summarytools)
@@ -81,7 +81,7 @@ df$lea_4[df$lea_4 == 99] <- -1
 dfSummary(df)
 
 ```
-      - col_1, eng_2, inc_2, & inc_5 have 1 missing value each.It should be correctly coded as -1. 
+ - col_1, eng_2, inc_2, & inc_5 have 1 missing value each. It should be correctly coded as -1. 
 ```{r}
 df[is.na(df$col_1), ] #for employee_ID M02429, only col_1 is missing. It should be coded as -1. 
 df[is.na(df$eng_2), ] #for employee_ID M01597, only eng_2 is missing. It should be coded as -1.
@@ -94,7 +94,12 @@ df$inc_2[is.na(df$inc_2)] <- -1
 df$inc_5[is.na(df$inc_5)] <- -1
 
 ```
-        - for 'country' variable, UK & United Kingdom should be the same category. Similarly, USA & United States should be the same category. Let's collapse these categories together for each country. 
+        - duplicates: there are no duplicates based on employee ID
+```{r}
+sum(duplicated(df$eeid))
+```
+  
+ - for 'country' variable, UK & United Kingdom should be the same category. Similarly, USA & United States should be the same category. Let's collapse these categories together for each country. 
 ```{r}
 
 table(df$country)
@@ -103,6 +108,41 @@ df$country[df$country == "USA"] <- "United States"
 table(df$country)
 
 ```
+- age:  
+        - the group '19', '21' should be consolidated into '18-24'.
+        - the group '26', '28' should be consolidated into '25-34'.
+        - the group '39', '42' should be consolidated into '35-44'.
+        - the group '48' should be consolidated into '45-54'.
+```{r}
+table(df$age, useNA = "always")
+
+df$age[df$age == "19"] <- "18-24"
+df$age[df$age == "21"] <- "18-24"
+df$age[df$age == "26"] <- "25-34"
+df$age[df$age == "28"] <- "25-34"
+df$age[df$age == "39"] <- "35-44"
+df$age[df$age == "42"] <- "35-44"
+df$age[df$age == "48"] <- "45-54"
+
+
+```
+- race: 
+          -Consolidate "Black or African American" & "Black or African Americans" into one group.
+```{r}
+table(df$race, useNA = "always")
+df$race[df$race == "Black or African Americans"] <- "Black or African American"
+```
+- gender:
+            -Consolidate "Male" & "Man" into one group
+            -Consolidate "Female" & "Woman" into one group
+```{r}
+table(df$gender, useNA = "always")
+df$gender[df$gender == "Man"] <- "Male"
+df$gender[df$gender == "Woman"] <- "Female"
+```
+
+     
+     
         - 40.2% of race variable's observations (1067) are missing. let's see if the values in this variable has patterns.
 Based on the contingency table below, 
             - all employees in Australia have no information about their race. 
@@ -123,7 +163,7 @@ c_t
 ```
 
         - 38.7% of hiring date variable's observations (1025) are missing. 
-Based on the missmap graph, the patterns of missing values for hiredate and race variables seem randomly distributed. Let's examine if the missing values are truly randomly distributed or they follow certain patterns. 
+Based on the missmap graph as well as the contingency tables between hire year and another demographic predictor below (i.e., country ), the patterns of missing values for hiredate seem random.Research suggests that, when the pattern of missing values are random, omitting them does not introduce any bias. We have roughly 61% of the employees' hiredates that seem to be randomly caused based on the currently available data. Given that the population we want to understand is the entire employees, having 61% of the population's data is acceptable while it might be the best to have nearly 100% of data
           
 ```{r}
 df_2 <- subset(df, select = c(hiredate, race))
@@ -136,7 +176,11 @@ max(df$hiredate, na.rm = TRUE) # 2022-12-06
 
 #let's create a new variable named hireyear 
 df$hireyear <- format(df$hiredate, "%Y")
-table(df$hireyear)
+table(df$hireyear, useNA = "always") #about 39% of employee hiredates are missing.
+library(ggplot2)
+ggplot(df, aes(x=hireyear)) + geom_bar()
+ggplot(df, aes(x=hiredate)) + geom_histogram() #based on the hiredates, this company grew rapidly between 2020-2022
+
 
 #let's create a contingency table for hireyear and country 
 c_t <- table(df$hireyear, df$country, useNA = "always")
@@ -161,6 +205,57 @@ addmargins(c_t)
   ## 43/78 is missing for 55-64 = 55%
   ## 9/54 is missing for 65+ = 16%
   ## 2 individuals have no age data.
+
+#hireyear & manager status
+
+table(df$manager_status, useNA = "always") # manager missing for hire_date = 265/654 = 41 %
+c_t <- table(df$hireyear, df$manager_status, useNA = "always") # non-manager missing for hire_date = 760/1997 = 38%
+addmargins(c_t)
+
+#hireyear & gender
+
+table(df$gender, useNA = "always") # female missing for hire_date = 310/816 = 38 %
+c_t <- table(df$hireyear, df$gender, useNA = "always") # male missing for hire_date = 711/1826 = 39%
+addmargins(c_t)
+
+#hireyear & race
+table(df$race, useNA = "always") 
+c_t <- table(df$hireyear, df$race, useNA = "always") # no particular pattern of missing hiring dates based on race
+addmargins(c_t)
+
+```
+  -Create a new variable called tenure by using hiredate.
+      Substract hiredate from August 1st 2022, the date instructed by the technical assessment rubric: it's important to note that there are 55 employees who were hired on or after August 1st 2022. However, given that I am asked to analyze the data as of August 1st 2022, I omit these 55 observations to not introduce a bias in my data. 
+```{r}
+# the number of employees who were hired on or after August 1st 2022
+participants_count <- sum(!is.na(df$hiredate) & df$hiredate >= as.Date("2022-08-01"))
+participants_count
+which(df$hiredate >= as.Date("2022-08-01"))
+
+
+#let's create the cutpoint, which is 2022-08-01, to calculate tenure groups
+cutpoint <- as.Date("2022-08-01")
+#given that the average number of days in a month is 365/12 = 30.4166666667, 
+tenure_days <- as.numeric(difftime(cutpoint, df$hiredate, units = "days"))
+tenure_months <- as.numeric(difftime(cutpoint, df$hiredate, units = "days")/(365/12))
+
+#create tenure_groups 
+tenure_groups <- cut(tenure_months,
+                      breaks = c(-Inf, 0.00001, 3, 6, 12, 24, 48, 72, 120, Inf),  # In months
+                      labels = c("hired on or after 2022-08-01",  "Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years"), right = FALSE) # right = FALSE to exclude the right side exact month
+
+# Print the participants with hire date "2020-08-01"
+
+table(tenure_groups, useNA = "always")
+# Add tenure_group variable to data frame
+df$tenure_group <- as.character(tenure_groups)
+
+# Print the data frame with the new tenure_group variable
+table(df$tenure_group, useNA = "always")
+
 ```
 
+  -Create a new dataset by changing all the missing values to NA. 
+
+    
      
