@@ -13,9 +13,6 @@ Purpose: This report shows my data analysis of Hooli's employee enagement.
 
 This report is structured as follows: 
 
-* Data preparation 
-
-
 * Data preparation
 
  - Loading Data
@@ -49,7 +46,7 @@ str(df)
 ```
 
 
-  - Data pre-processing & Univariate Analysis
+  - Data pre-processing
     
 - The presence of outliers, max value 99 for ali_1, ali_2, ali_3, col_1, col_2, col_3, lea_4. The value 99 is a value that is out of scale of -1 to 5. I discovered that all these responses come from Denmark. There seems to be a sampling error or coding error for responses from Denmark. Given that these are psychological measures, after going through the data dictionary, it doesn't make sense code 99 might denote an exceptional response out of -1 to 5 scale. Thus, I deem 99 as a coding error. Given that these employees are less than 1% of the population and that they completed the survey, I recode 99 to -1, the code for missing value. 
     
@@ -170,6 +167,7 @@ df_2 <- subset(df, select = c(hiredate, race))
 library(Amelia)
 missmap(df_2)
 
+rm(df_2)
 #the earliest & latest date for hiredate
 min(df$hiredate, na.rm = TRUE) # 2012-01-10
 max(df$hiredate, na.rm = TRUE) # 2022-12-06
@@ -255,7 +253,79 @@ table(df$tenure_group, useNA = "always")
 
 ```
 
-  -Create a new dataset by changing all the missing values to NA. 
+  -Create a new dataset by changing all the missing values to NA (I named this new dataset df_2)
+  
+```{r}
+
+dfSummary(df)
+df_2 <- df
+
+df_2$ali_1[df_2$ali_1 == -1] <- NA 
+df_2$ali_2[df_2$ali_2 == -1] <- NA
+df_2$ali_3[df_2$ali_3 == -1] <- NA
+
+df_2$col_1[df_2$col_1 == -1] <- NA 
+df_2$col_2[df_2$col_2 == -1] <- NA 
+df_2$col_3[df_2$col_3 == -1] <- NA 
+
+
+df_2$eng_1[df_2$eng_1 == -1] <- NA 
+df_2$eng_2[df_2$eng_2 == -1] <- NA
+df_2$eng_3[df_2$eng_3 == -1] <- NA 
+df_2$eng_4[df_2$eng_4 == -1] <- NA
+df_2$eng_5[df_2$eng_5 == -1] <- NA
+
+df_2$inc_1[df_2$inc_1 == -1] <- NA 
+df_2$inc_2[df_2$inc_2 == -1] <- NA
+df_2$inc_3[df_2$inc_3 == -1] <- NA
+df_2$inc_4[df_2$inc_4 == -1] <- NA
+df_2$inc_5[df_2$inc_5 == -1] <- NA 
+
+df_2$lea_1[df_2$lea_1 == -1] <- NA
+df_2$lea_2[df_2$lea_2 == -1] <- NA
+df_2$lea_3[df_2$lea_3 == -1] <- NA
+df_2$lea_4[df_2$lea_4 == -1] <- NA
+
+df_2$age[df_2$age == "N/A"] <- NA
+df_2$gender[df_2$gender == "Unknown"] <- NA
+
+dfSummary(df_2)
+
+```
+  * Calculate the favorable scores for all questions and factors for Hooli Overall.
+    - all questions' favorability scores below:
+```{r}
+
+dfSummary(df_2)
+favorability_ali_1 <- sum(df_2$ali_1 %in% c(4,5))/sum(df_2$ali_1 %in% c(1:5))
+favorability_ali_1
+favorability_lea_4 <- sum(df_2$lea_4 %in% c(4,5))/sum(df_2$lea_4 %in% c(1:5))
+favorability_lea_4
+
+#let's create a loop function to calculate the favorability score for all questions:
+
+function_favorability <- function(df) {
+  favorability_score <- numeric(ncol(df))  # Include all columns
+  column_names <- names(df)  # Get the column names
+  
+  for (i in 1:ncol(df)) {  # Start from column 1
+    # Calculate the proportion
+    favorability_score[i] <- sum(df[[i]] %in% c(4,5)) / sum(df[[i]] %in% c(1:5))
+  }
+  
+  # Combine favorability scores and column names into a data frame
+  result <- data.frame(column_name = column_names, favorability_score = favorability_score)
+  
+  return(result)
+}
+
+# Calculate favorability_score for columns 2 to 21
+favorability_score <- function_favorability(df_2[, 2:21])
+
+print(favorability_score)
+
+```
+      - Calculate factor scores for all factors 
 
     
      
