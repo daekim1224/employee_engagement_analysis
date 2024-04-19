@@ -323,9 +323,44 @@ function_favorability <- function(df) {
 favorability_score <- function_favorability(df_2[, 2:21])
 
 print(favorability_score)
-
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
 ```
-      - Calculate factor scores for all factors 
+      - Calculate a 'Factor Favorable Score', which is the average favorable score among questions within a factor.
+```{r}
+#let's create a function that automates for this type of analysis in the future:
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+
+# Print the factor favorable scores
+print(factor_favorable_score)
+```
+  * 2. Calculate engagement factor scores by all tenure groups. 
+  * 3. Calculate favorable scores for all questions and factors by gender
+  * 4. Correlate all non-engagement questions to the engagement factor for Hooli Overall.
+  * 5. Calculate engagement & leadership factor scores for all countries. 
 
     
      
