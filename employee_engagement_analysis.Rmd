@@ -352,8 +352,8 @@ for (factor_abbr in factor_abbreviations) {
 
 print(factor_favorable_score)
 ```
-  * 2. Calculate engagement factor scores by all tenure groups. 
-    - a. engagement factor scores for employees whose tenure are "Under 3 Months".
+  * 2. Calculate engagement factor scores by all tenure groups (need to clarify this question..)
+    - a. engagement factor favorability scores for employees whose tenure are "Under 3 Months".
       n = 47
 ```{r}
 df_2[df_2$tenure_group == "Under 3 months" & !is.na(df_2$tenure_group), ]
@@ -366,7 +366,7 @@ print(favorability_score)
 
 ```
   
-    - b.engagement factor scores for employees whose tenure are "6-12 months".
+    - b.engagement factor favorability scores for employees whose tenure are "6-12 months".
       n = 290
 ```{r}
 #6-12 months
@@ -378,7 +378,7 @@ colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
 ```  
    
-    - c. engagement factor scores for employees whose tenure are "1-2 years".
+    - c. engagement factor favorability scores for employees whose tenure are "1-2 years".
       N = 429
 ```{r}
 #1-2 years
@@ -390,7 +390,7 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "1-2 years
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
 ```  
-    - d. engagement factor scores for employees whose tenure are "2-4 years".
+    - d. engagement factor favorability scores for employees whose tenure are "2-4 years".
       n = 380
 ```{r}
 #2-4 years
@@ -447,15 +447,428 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "hired on 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
 
-
 ```
   * 3. Calculate favorable scores for all questions and factors by gender
+    - a. favorable scores for all questions for female
+        - N for female = 820
+```{r}
+table(df_2$gender)
+df_2[df_2$gender== "Female" & !is.na(df_2$gender), ]
 
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$gender == "Female", 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+```
+    - b. factor favorable scores for all factors for female
+        - N for female = 820
+```{r}
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
   
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+    - c. favorable scores for all questions for male
+        N for male = 1830
+```{r}
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$gender == "Male", 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+```
+  
+    - d. favorable scores for all questions by male
+         N for male = 1830
+```{r}
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+
   * 4. Correlate all non-engagement questions to the engagement factor for Hooli Overall.
-  
-  
-  * 5. Calculate engagement & leadership factor scores for all countries. 
 
+```{r}
+
+# create a new variable named 'engagement_factor', which represents each employee's average of engagement scores. 
+df_2$engagement_factor <- rowMeans(df_2[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
+
+
+numeric_df_2 <- Filter(is.numeric, df_2)
+
+library(dplyr)
+numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
+
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
+correlation_matrix
+
+library(corrplot)
+corrplot(correlation_matrix, type = "upper", order = "hclust")
+
+# Extract the correlations for "engagement_factor"
+engagement_correlations <- correlation_matrix[, "engagement_factor"]
+
+engagement_factor_correlation_table <- data.frame(
+  variable = names(engagement_correlations),  # Variable names
+  correlation = engagement_correlations  # Correlation values
+)
+
+engagement_factor_correlation_table <- engagement_factor_correlation_table[
+  engagement_factor_correlation_table$variable != "engagement_factor", 
+]
+
+engagement_factor_correlation_table <-  engagement_factor_correlation_table %>%
+  arrange(desc(correlation))
+print(engagement_factor_correlation_table)
+
+
+library(ggplot2)
+ggplot(engagement_factor_correlation_table, aes(x = variable, y = correlation)) +
+  geom_bar(alpha = 0.5, stat = "identity", fill = "purple") +  
+  labs(x = "variable name", y = "Correlation", title = "Correlations with Engagement Factor") +
+  theme( axis.text.x = element_text(size = 9, angle = 45, hjust = 1),
+      axis.title = element_text(size = 12),
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+    )
+
+
+
+regression_model <- lm(engagement_factor ~., data = numeric_df_2)
+# Display summary statistics for the model
+summary(regression_model)
+```
+  
+  
+  * 5. Calculate engagement & leadership factor scores for all countries.
+    - a. Australia's N = 101
+   
+
+```{r}
+df_2[df_2$country == "Australia" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "Australia", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+    - b. Canada's N = 84
+```{r}
+df_2[df_2$country == "Canada" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "Canada", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+    - c. China's N = 60
+```{r}
+df_2[df_2$country == "China" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "China", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+    - d. Denmark's N = 24
+```{r}
+df_2[df_2$country == "Denmark" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "Denmark", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+    - e. France's N = 136
+```{r}
+df_2[df_2$country == "France" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "France", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```  
+    - f. Germany's N = 48
+
+```{r}
+df_2[df_2$country == "Germany" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "Germany", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
+
+    - g. India's N = 288
     
+```{r}
+
+df_2[df_2$country == "India" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "India", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+```
+
+    - h. United Kingdom's N = 359
+    
+```{r}
+df_2[df_2$country == "United Kingdom" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "United Kingdom", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+```
      
