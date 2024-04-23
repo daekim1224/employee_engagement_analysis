@@ -9,60 +9,74 @@ output: html_document : github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 # Overview of This Report
-Purpose: This report shows my data analysis of Hooli's employee enagement.
 
-This report is structured as follows: 
+This document shows my R codes that I used to clean and analyze Hooli's employee survey data. 
+The document is structured as follows: 
 
-* Data preparation
+* 1. Data preparation & processing for analysis 
+* 2. Data Analysis
+    - (1) Calculate the favorable scores (% of agree + strongly agree) for all questions and factors for Hooli overall.
+    - (2) Calculate engagement factor favorable scores for all tenure groups.
+    - (3) Calculate favorable scores for all questions and factors across different gender groups.
+    - (4) Correlate all on-engagement questions to the engagement factor (full scale) for Hooli overall. 
 
- - Loading Data
+# 1. Data preparation & processing for analysis 
+
+## 1.a. Loading Data
 ```{r}
 library(readxl)
-df_original <- read_xlsx("data/Sr._People_Science_Analyst_Assignment_Dataset.xlsx")
+df_original <- read_xlsx("data/sr._people_science_analyst_assignment_dataset_2024.xlsx")
 ```
- - Exaimining the loaded data at the macro-level
+## 1.b. Data exploration & preparation
   
-    -'lea_3' should be a numeric variable. After checking the data, employee ID M01562's response is only missing for 'lea_3'. Therefore, this 'N/A' should be recoded as -1. 
+  * 'lea_3' should be a numeric variable. After checking the data, employee ID M01562's response is only missing for'lea_3'. Therefore, this 'N/A' should be recoded as -1. 
   
-    - hiredate should be a date variable. But it is important to note that the current format is written as day/month/year. So I need to specify this in my code. 
+  * 'hiredate' should be a date variable. It is also important to note that the current format is written as day/month/year. So in converting this variable to date-type, I need to specify this format in my code. 
 
 ```{r}
-head(df_original)
-tail(df_original)
+#checking the macro-level trends of the dataset 
 
+head(df_original, 5)
+tail(df_original, 5)
 str(df_original)
 
-df <- df_original
+#Creating a new dataset that I will prepare and process for analysis
+
+df <- df_original 
+
+#Fixing errors in 'lea_3'
 
 table(df_original$lea_3)
 df[df$lea_3 == "N/A", ]
 df$lea_3[df$lea_3 == "N/A"] <- -1
 table(df$lea_3)
+
+#transforming 'lea_3' to a numeric variable
 df$lea_3 <- as.numeric(df$lea_3)
 
+#transforming 'hiredate' into a date variable.
 df$hiredate <- as.Date(df$hiredate, format = "%d/%m/%Y")
 str(df)
 
 ```
 
+  * Handling outliers, '99', in various variables
 
-  - Data pre-processing
-    
-- The presence of outliers, max value 99 for ali_1, ali_2, ali_3, col_1, col_2, col_3, lea_4. The value 99 is a value that is out of scale of -1 to 5. I discovered that all these responses come from Denmark. There seems to be a sampling error or coding error for responses from Denmark. Given that these are psychological measures, after going through the data dictionary, it doesn't make sense code 99 might denote an exceptional response out of -1 to 5 scale. Thus, I deem 99 as a coding error. Given that these employees are less than 1% of the population and that they completed the survey, I recode 99 to -1, the code for missing value. 
+I identified several outliers, value 99, from these variables: ali_1, ali_2, ali_3, col_1, col_2, col_3, and lea_4. The value 99 is a value that is out of the scale of -1 to 5. I discovered that all these responses come from Denmark. Thus, it was probably a systematic coding error for these responses from Denmark. Given that these are psychological measures, it doesn't make sense code 99 might denote an exceptional response out of -1 to 5 scale. Thus, I deem 99 as a coding error. Additionally, these employees are less than 1% of the participants in the data and that they completed all the other questions in the survey. Therefore, I recode 99 to -1, the code for missing value. 
     
 ```{r}
 library(summarytools)
 dfSummary(df)
 
-#examine the responses of the employees who responsed 99 to one of these questions.
-df[df$ali_1 == 99, ] # other responses are in the normal scale range, 2 participants = M00238 & M00568
-df[df$ali_2 == 99, ] # except for ali_2 & lea_4, all the other responses are in the normal scale range, 1 participant = M01455
-df[df$ali_3 == 99, ] # other responses are in the normal scale range, 1 participant = M02319
-df[df$col_1 == 99, ] # other responses are in the normal scale range, 2 participants = M01339, M01843
-df[df$col_2 == 99, ] # other responses are in the normal scale range, 1 participant = M00168
-df[df$col_3 == 99, ] # other responses are in the normal scale range, 1 participant = M01393
-df[df$lea_3 == 99, ] # except fo lea_3, all the other responses are in the normal scale range, 1 participant = M01484
-df[df$lea_4 == 99, ] # except for ali_2 & lea_4, all the other responses are in the normal scale range, 1 participant = M01455
+#examine the responses of the employees who responded '99' to one of these questions.
+df[df$ali_1 == 99, ] # other responses are in the normal scale range & 2 participants = M00238 & M00568
+df[df$ali_2 == 99, ] # except for ali_2 & lea_4, all the other responses are in the normal scale range & 1 participant = M01455
+df[df$ali_3 == 99, ] # other responses are in the normal scale range & 1 participant = M02319
+df[df$col_1 == 99, ] # other responses are in the normal scale range & 2 participants = M01339, M01843
+df[df$col_2 == 99, ] # other responses are in the normal scale range & 1 participant = M00168
+df[df$col_3 == 99, ] # other responses are in the normal scale range & 1 participant = M01393
+df[df$lea_3 == 99, ] # except fo lea_3, all the other responses are in the normal scale range & 1 participant = M01484
+df[df$lea_4 == 99, ] # except for ali_2 & lea_4, all the other responses are in the normal scale range & 1 participant = M01455
 
 # recode values with 99 to -1.
 
@@ -75,10 +89,9 @@ df$col_3[df$col_3 == 99] <- -1
 df$lea_3[df$lea_3 == 99] <- -1
 df$lea_4[df$lea_4 == 99] <- -1
 
-dfSummary(df)
-
 ```
- - col_1, eng_2, inc_2, & inc_5 have 1 missing value each. It should be correctly coded as -1. 
+  * col_1, eng_2, inc_2, & inc_5 have 1 missing value each. It should be correctly coded as -1, the correct code for missing values.
+  
 ```{r}
 df[is.na(df$col_1), ] #for employee_ID M02429, only col_1 is missing. It should be coded as -1. 
 df[is.na(df$eng_2), ] #for employee_ID M01597, only eng_2 is missing. It should be coded as -1.
@@ -91,25 +104,27 @@ df$inc_2[is.na(df$inc_2)] <- -1
 df$inc_5[is.na(df$inc_5)] <- -1
 
 ```
-        - duplicates: there are no duplicates based on employee ID
+  * Checking for duplicates: there are no duplicates based on employee ID. each response comes from a unique employee
+  
 ```{r}
 sum(duplicated(df$eeid))
 ```
   
- - for 'country' variable, UK & United Kingdom should be the same category. Similarly, USA & United States should be the same category. Let's collapse these categories together for each country. 
+  * For the 'country' variable, 'UK' and 'United Kingdom' should be merged into one category. Similarly, 'USA' and 'United States' should be merged into one category. Let's combine these categories for each country.
+  
 ```{r}
-
 table(df$country)
 df$country[df$country == "UK"] <- "United Kingdom"
 df$country[df$country == "USA"] <- "United States"
 table(df$country)
 
 ```
-- age:  
-        - the group '19', '21' should be consolidated into '18-24'.
-        - the group '26', '28' should be consolidated into '25-34'.
-        - the group '39', '42' should be consolidated into '35-44'.
-        - the group '48' should be consolidated into '45-54'.
+  * For 'age' variable, multiple categories need to be consolidated:   
+    - the group '19', '21' should be consolidated into '18-24'.
+    - the group '26', '28' should be consolidated into '25-34'.
+    - the group '39', '42' should be consolidated into '35-44'.
+    - the group '48' should be consolidated into '45-54'.
+    
 ```{r}
 table(df$age, useNA = "always")
 
@@ -123,97 +138,101 @@ df$age[df$age == "48"] <- "45-54"
 
 
 ```
-- race: 
-          -Consolidate "Black or African American" & "Black or African Americans" into one group.
+  * For 'race' variable, "Black or African American" & "Black or African Americans" should be mergedinto one group.
+  
 ```{r}
 table(df$race, useNA = "always")
 df$race[df$race == "Black or African Americans"] <- "Black or African American"
 ```
-- gender:
-            -Consolidate "Male" & "Man" into one group
-            -Consolidate "Female" & "Woman" into one group
+  * For 'gender' variable, these groups below need to be consolidated:
+    -Consolidate "Male" & "Man" into one group
+    -Consolidate "Female" & "Woman" into one group
+    
 ```{r}
 table(df$gender, useNA = "always")
 df$gender[df$gender == "Man"] <- "Male"
 df$gender[df$gender == "Woman"] <- "Female"
+
 ```
+  * 40.2% of race variable's observations (1067) are missing. Let's see if the values in this variable has patterns. 
+    
+      Based on the contingency table below, 
+      - 101/101 employees in Australia have no information about their race. 
+      - 60/84 employees in Canada have no information about their race except 24 who are white.
+      - 55/60 employees in China have no information about their race except 5 who are white.
+      - 24/24 employees in Denmark have no information about their race.
+      - 136/136 employees in France have no information about their race.
+      - 48/48 employees in Germany have no information about their race. 
+      - 288/288 employees in India have no information about their race. 
+      - 355/359 employees in the United Kingdom have no information about their race.
+      - 1017/1017 employees in the United States have demographic information about race. 
 
-     
-     
-        - 40.2% of race variable's observations (1067) are missing. let's see if the values in this variable has patterns.
-Based on the contingency table below, 
-            - all employees in Australia have no information about their race. 
-            - 60/84 employees in Canada have no information about their race except 24 who are white.
-            - 55/60 employees in China have no information about their race except 5 who are white.
-            - 24/24 employees in Denmark have no information about their race.
-            - 48/47 employees in Germany have no information about their race. 
-            - 288/288 employees in India have no information about their race. 
-            - 355/359 employees in the United Kingdom have no information about their race.
-            - All employees in the United States have demographic information about race. 
-Except for the United States, all the countries with missing information about race are largely ethnically homogeneous. Therefore, the company might not collect information about employee's race as the variance in race among employees might be too small. For example, about 90.2 percent of the population in Australia are white. Therefore, I only conduct an analysis about race for the United States only. 
+Except for the United States, all the countries with missing information about race are largely ethnically homogeneous (e.g., Denmark). Therefore, the company might not collect information about employee's race as the variance in race among employees might be too small to be a meaningful (For example, according to demographic research, about 90.2 percent of the population in Australia are white). Therefore, conducting an analysis about race for other countries except for the United States would not provide meaningful insights to Hooli.  
 ```{r}
-table(df$race, useNA = "always")
-
 c_t <- table(df$race, df$country, useNA = "always")
 c_t
-
 ```
 
-        - 38.7% of hiring date variable's observations (1025) are missing. 
-Based on the missmap graph as well as the contingency tables between hire year and another demographic predictor below (i.e., country ), the patterns of missing values for hiredate seem random.Research suggests that, when the pattern of missing values are random, omitting them does not introduce any bias. We have roughly 61% of the employees' hiredates that seem to be randomly caused based on the currently available data. Given that the population we want to understand is the entire employees, having 61% of the population's data is acceptable while it might be the best to have nearly 100% of data
+    * 38.7% of 'hiredate' variable's observations (n = 1025) are missing. 
+      - Canada is missing 48/84 employees' hiredates
+      - China is missing 60/60 employees' hiredates 
+      - United States is missing 917/1551 employees' hiredates
+      - In total, 1025/2651 employees' hire dates are missing. 
+      - The insights I will generate about each tenure group would be limited to provide insights into employees in particularly Canada and China. 
+
+Based on the missing value graph and the contingency tables between 'hireyear' and each demographic predictor (such as country), the pattern of missing values for 'hiredate' appears to be random. Research suggests that when the pattern of missing values is completely random, omitting them does not introduce bias into statistical results. Currently, we have data for about 61% of employees' hire dates, which seems randomly distributed. Given that our goal is to understand the entire employee population, having data for 61% of the population is acceptable, though having nearly 100% of the data would be preferable.
           
 ```{r}
 df_2 <- subset(df, select = c(hiredate, race))
 library(Amelia)
 missmap(df_2)
-
 rm(df_2)
+
 #the earliest & latest date for hiredate
-min(df$hiredate, na.rm = TRUE) # 2012-01-10
-max(df$hiredate, na.rm = TRUE) # 2022-12-06
+min(df$hiredate, na.rm = TRUE) # 2014-01-05
+max(df$hiredate, na.rm = TRUE) # 2024-11-02
+
 
 #let's create a new variable named hireyear 
 df$hireyear <- format(df$hiredate, "%Y")
 table(df$hireyear, useNA = "always") #about 39% of employee hiredates are missing.
 library(ggplot2)
 ggplot(df, aes(x=hireyear)) + geom_bar()
-ggplot(df, aes(x=hiredate)) + geom_histogram() #based on the hiredates, this company grew rapidly between 2020-2022
+ggplot(df, aes(x=hiredate)) + geom_histogram() #based on the hiredates, this company grew rapidly between 2022-2023 and hired a bunch!
 
-
-#let's create a contingency table for hireyear and country 
+##Let's identify any patterns that might exist between hireyear (hiredate) or another variable.##
+#Let's create a contingency table for hireyear and country 
 c_t <- table(df$hireyear, df$country, useNA = "always")
 addmargins(c_t)
-  ## Canada is missing 48/84 employees' hiredates
-  ## China is missing 60/60 employees' hiredates
-  ## United States is missing 917/1551 employees' hiredates
-  ## In total, 1025/2651 employees' hire dates are missing. 
-  ## I need to be careful about creating tenure groups for Canada, China, and the United States
+  ## Canada is missing 45/84 employees' hiredates
+  ## China is missing 60/60 employees' hiredates 
+  ## United States is missing 927/1551 employees' hiredates
+  ## In total, 1032/2651 employees' hire dates are missing. 
+  ## I need to be careful about creating tenure groups for Canada, China, and the United States as these groups have a significant missing data issue (roughly 39% of missing data for tenure for Hooli Overall)
 
-#let's create a contingency table for hireyear and age
+
+#Let's create a contingency table for hireyear and age
 table(df$age, useNA = "always")
 c_t <- table(df$hireyear, df$age, useNA = "always")
 addmargins(c_t)
-  ## 60/147 is missing for 18-24 old = 40.8%
-  ## 469/1266 is missing for 25-34 old = 37%
-  ## 1/1 is missing for 28 old 
-  ## 296/795 is missing for 35-44 years old = 37%
-  ## 1/1 is missing for 39 old
-  ## 1/1 is missing for 42 old
-  ## 141/301 is missing for 45-54 = 46%
-  ## 43/78 is missing for 55-64 = 55%
-  ## 9/54 is missing for 65+ = 16%
+  ## 59/149 is missing for 18-24 old = 40%
+  ## 480/1269 is missing for 25-34 old = 38%
+  ## 296/797 is missing for 35-44 years old = 37%
+  ## 143/302 is missing for 45-54 = 47%
+  ## 44/78 is missing for 55-64 = 56%
+  ## 9/54 is missing for 65+ = 17%
   ## 2 individuals have no age data.
 
 #hireyear & manager status
 
-table(df$manager_status, useNA = "always") # manager missing for hire_date = 265/654 = 41 %
-c_t <- table(df$hireyear, df$manager_status, useNA = "always") # non-manager missing for hire_date = 760/1997 = 38%
+table(df$manager_status, useNA = "always") # manager missing for hire_date = 271/654 = 41 %
+c_t <- table(df$hireyear, df$manager_status, useNA = "always") # non-manager missing for hire_date = 761/1997 = 38%
 addmargins(c_t)
 
 #hireyear & gender
 
-table(df$gender, useNA = "always") # female missing for hire_date = 310/816 = 38 %
-c_t <- table(df$hireyear, df$gender, useNA = "always") # male missing for hire_date = 711/1826 = 39%
+table(df$gender, useNA = "always") # female missing for hire_date = 318/820 = 39 %
+c_t <- table(df$hireyear, df$gender, useNA = "always") # male missing for hire_date = 713/1830 = 39%
 addmargins(c_t)
 
 #hireyear & race
@@ -222,28 +241,46 @@ c_t <- table(df$hireyear, df$race, useNA = "always") # no particular pattern of 
 addmargins(c_t)
 
 ```
-  -Create a new variable called tenure by using hiredate.
-      Substract hiredate from August 1st 2022, the date instructed by the technical assessment rubric: it's important to note that there are 55 employees who were hired on or after August 1st 2022. However, given that I am asked to analyze the data as of August 1st 2022, I omit these 55 observations to not introduce a bias in my data. 
+   * Create a new variable called 'tenure' by using hiredate.
+      
+      Substract 'hiredate' from March 1st 2024, the date instructed by the technical assessment rubric to create different tenure groups by using 'hiredate'. It's important to note that there are 11 employees who were hired on or after March 1st 2024. However, given that I am asked to analyze the data as of March 1st 2024, I omit these 11 observations to not introduce a bias in my data. For example, introducing this 11 observations into under 3 months might change the characteristics of those in that group as of March 1st 2024. 
+      
+      - Given that there are only 4 employees in '10+ years' groups, we do not report any findings about this group.
+      
 ```{r}
-# the number of employees who were hired on or after August 1st 2022
-participants_count <- sum(!is.na(df$hiredate) & df$hiredate >= as.Date("2022-08-01"))
+# the number of employees who were hired on or after March 1st, 2024
+participants_count <- sum(!is.na(df$hiredate) & df$hiredate >= as.Date("2024-03-01"))
 participants_count
-which(df$hiredate >= as.Date("2022-08-01"))
+
+df2 <- df
+df2$hiredate <- as.Date(df2$hiredate, format = "%Y-%m-%d")  # Adjust the date format as needed
+df2 <- df2[!is.na(df2$hiredate), ]
+
+# Subset rows where 'hiredate' is on or after March 1, 2024
+subset_df2 <- df2[df2$hiredate >= as.Date("2024-03-01"), ]
+subset_df3 <- subset_df2[, c("eeid", "hiredate")]
+
+print(subset_df3) #the list of employees hired on or after March 1, 2024
+
+rm(df2, subset_df, subset_df2, subset_df3)
+min(df$hiredate, na.rm = TRUE) # 2014-01-05, the earliest hiring date
+max(df$hiredate, na.rm = TRUE) # 2024-11-02, the latest hiring data
 
 
-#let's create the cutpoint, which is 2022-08-01, to calculate tenure groups
-cutpoint <- as.Date("2022-08-01")
+
+#let's create the cutpoint, which is 2024-03-01, to create tenure groups
+cutpoint <- as.Date("2024-03-01")
 #given that the average number of days in a month is 365/12 = 30.4166666667, 
 tenure_days <- as.numeric(difftime(cutpoint, df$hiredate, units = "days"))
 tenure_months <- as.numeric(difftime(cutpoint, df$hiredate, units = "days")/(365/12))
 
+
 #create tenure_groups 
 tenure_groups <- cut(tenure_months,
-                      breaks = c(-Inf, 0.00001, 3, 6, 12, 24, 48, 72, 120, Inf),  # In months
-                      labels = c("hired on or after 2022-08-01",  "Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years"), right = FALSE) # right = FALSE to exclude the right side exact month
+                      breaks = c(-Inf, 0.0000001, 3, 6, 12, 24, 48, 72, 120, Inf),  # In months
+                      labels = c("hired on or after 2024-03-01",  "Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years"), right = FALSE) # right = FALSE to EXCLUDE the right side month in the cateogry
 
-# Print the participants with hire date "2020-08-01"
-
+#the distribution of employees in each tenure group
 table(tenure_groups, useNA = "always")
 # Add tenure_group variable to data frame
 df$tenure_group <- as.character(tenure_groups)
@@ -253,11 +290,10 @@ table(df$tenure_group, useNA = "always")
 
 ```
 
-  -Create a new dataset by changing all the missing values to NA (I named this new dataset df_2)
+  * Changing all the missing values to NA (I named this new dataset df_2) to make sure that '-1' does not influence the results of our analysis. 
   
 ```{r}
 
-dfSummary(df)
 df_2 <- df
 
 df_2$ali_1[df_2$ali_1 == -1] <- NA 
@@ -267,7 +303,6 @@ df_2$ali_3[df_2$ali_3 == -1] <- NA
 df_2$col_1[df_2$col_1 == -1] <- NA 
 df_2$col_2[df_2$col_2 == -1] <- NA 
 df_2$col_3[df_2$col_3 == -1] <- NA 
-
 
 df_2$eng_1[df_2$eng_1 == -1] <- NA 
 df_2$eng_2[df_2$eng_2 == -1] <- NA
@@ -287,20 +322,26 @@ df_2$lea_3[df_2$lea_3 == -1] <- NA
 df_2$lea_4[df_2$lea_4 == -1] <- NA
 
 df_2$age[df_2$age == "N/A"] <- NA
+
+#we convert "Unknown" to NA as this category has less than 5 people and we do not report.
 df_2$gender[df_2$gender == "Unknown"] <- NA
 
 dfSummary(df_2)
 
+#the end of data-processing & preparation for analysis
 ```
-  * 1. Calculate the favorable scores for all questions and factors for Hooli Overall.
-    - a. Favorability scores for all questions below:
+  
+  
+  # 2. Data Analysis
+  
+  * (1) Calculate the favorable scores for all questions and factors for Hooli Overall.
+    - a. The favorability scores for all questions below:
 ```{r}
-
 dfSummary(df_2)
 favorability_ali_1 <- sum(df_2$ali_1 %in% c(4,5))/sum(df_2$ali_1 %in% c(1:5))
 favorability_ali_1
 
-#let's create a function to automatate the process of calculating favorability score for all questions:
+#let's create a function that automatates the process of calculating favorability scores for all questions at once:
 
 function_favorability <- function(df) {
   favorability_score <- numeric(ncol(df))  # Include all columns
@@ -322,8 +363,25 @@ favorability_score <- function_favorability(df_2[, 2:21])
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+print(favorability_score_percent)
+library(ggplot2)
+
+ggplot(favorability_score_percent, aes(x = question_number, y = favorability_score, fill = question_number)) +
+  geom_bar(stat = "identity", show.legend = FALSE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorability Score for Each Question Item") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
 ```
-      - b. Calculate a 'Factor Favorable Score', which is the average favorable score among questions within a factor.
+      - b. Calculate a 'Factor Favorable Score', which is the average favorable score among questions within a factor, for each factor.
 ```{r}
 #let's create a function that automates the process of calculating of factor favorable score.
 
@@ -351,9 +409,47 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
+
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+  
+print(factor_favorability_score_percent)
+
+#combine the table with favorability score for each item with the table with favorability score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+# Distinguish the average rows from other item rows
+highlight_questions <- combined_favorability_df$question_number[c(1, 5, 9, 15, 21)]
+
+combined_favorability_df$highlight <- ifelse(
+  combined_favorability_df$question_number %in% highlight_questions,
+  "first",
+  "other"
+)
+
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) + 
+  labs(x = "Factor", y = "Favorability Score", title = "Favorability Score for Each Factor") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
+
+#create a df storing each group's enagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "All",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
 ```
   * 2. Calculate engagement factor scores by all tenure groups (need to clarify this question..)
-    - a. engagement factor favorability scores for employees whose tenure are "Under 3 Months".
+    - a. engagement factor favorable scores for employees whose tenure are "Under 3 Months".
       n = 47
 ```{r}
 df_2[df_2$tenure_group == "Under 3 months" & !is.na(df_2$tenure_group), ]
@@ -363,6 +459,44 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "Under 3 m
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those under 3 months
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with Under 3 Months Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
+
+
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "Under 3 Months"
 
 ```
   
@@ -376,6 +510,42 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "6-12 mont
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with 6-12 months tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 6-12 Months Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "6-12 Months"
 ```  
    
     - c. engagement factor favorability scores for employees whose tenure are "1-2 years".
@@ -385,11 +555,48 @@ print(favorability_score)
 df_2[df_2$tenure_group == "1-2 years" & !is.na(df_2$tenure_group), ]
 # Calculate favorability_score for columns 8 to 12 (engagement questions)
 favorability_score <- function_favorability(df_2[df_2$tenure_group == "1-2 years", 8:12])
-
-
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with 1-2 years tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 1-2 Years Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "1-2 Years"
+
 ```  
+
+
     - d. engagement factor favorability scores for employees whose tenure are "2-4 years".
       n = 380
 ```{r}
@@ -400,6 +607,44 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "2-4 years
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with 2-4 years tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 2-4 Years Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+   
+   
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "2-4 Years"
+
 ```
     - e. engagement factor scores for employees whose tenure are "4-6 years".
       N = 154
@@ -411,6 +656,44 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "4-6 years
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with 4-6 years tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 4-6 Years Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
+
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "4-6 Years"
+
 ```
      - f. engagement factor scores for employees whose tenure are "6-10 years".
        N = 29
@@ -423,6 +706,44 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "6-10 year
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with 6-10 years tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 6-10 Years Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
+
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "6-10 Years"
+
 ```
    - g. engagement factor scores for employees whose tenure are "10+ years".
     N = 4, given that this cateogry has less than 4 employees, we don't report it.
@@ -434,6 +755,38 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "10+ years
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with over 10 years tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with Over 10 Years Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
 ```
    - h. engagement factor scores for employees whose tenure are "hired on or after 2022-08-01".
      N = 55 (wait for what Vivian says)
@@ -447,7 +800,59 @@ favorability_score <- function_favorability(df_2[df_2$tenure_group == "hired on 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
 
+# Calculate the average engagement factor favorable score for those who were hired on or after 2020-08-01
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees Hired On Or After 2020-08-01") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+
 ```
+  
+  - i. Engagement factor favorability scores for employees by tenure
+```{r}
+engagement_by_tenure$favorability_score <- round(engagement_by_tenure$favorability_score*100)
+engagement_by_tenure$question_number <- factor(engagement_by_tenure$question_number, levels = engagement_by_tenure$question_number)
+# Distinguish the average row from other item rows
+engagement_by_tenure$highlight <- ifelse(engagement_by_tenure$question_number == engagement_by_tenure$question_number[1], "first", "other")
+
+
+ggplot(engagement_by_tenure, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorability Scores by Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+```
+  
   * 3. Calculate favorable scores for all questions and factors by gender
     - a. favorable scores for all questions for female
         - N for female = 820
