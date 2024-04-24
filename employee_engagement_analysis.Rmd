@@ -368,18 +368,42 @@ favorability_score_percent <- favorability_score
 favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
   
 print(favorability_score_percent)
-library(ggplot2)
 
-ggplot(favorability_score_percent, aes(x = question_number, y = favorability_score, fill = question_number)) +
-  geom_bar(stat = "identity", show.legend = FALSE) + 
-  labs(x = "Question Item", y = "Favorability Score", title = "Favorability Score for Each Question Item") + 
+
+#graph favorable score for each question
+##setting different colors for different factors
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+##
+
+group_colors <- c(
+  "Alignment" = "#D08770",  # Light orange for Group 1
+  "Collaboration" = "#A3BE8C",  # Light green for Group 2
+  "Engagement" = "#5E81AC",  # Light blue for Group 3
+  "Inclusion" = "#EBCB8B",  # Light yellow for Group 4
+  "Leadership" = "#B48EAD"   # Mild purple for Group 5
+)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Question Item") + 
   theme_minimal() + 
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),  
     plot.title = element_text(hjust = 0.5)
   ) +
-  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
-
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
 ```
       - b. Calculate a 'Factor Favorable Score', which is the average favorable score among questions within a factor, for each factor.
 ```{r}
@@ -410,50 +434,99 @@ for (factor_abbr in factor_abbreviations) {
 
 print(factor_favorable_score)
 
+#change the factor favorable scores into percentage 
 factor_favorability_score_percent <- factor_favorable_score
 factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
-  
-print(factor_favorability_score_percent)
 
-#combine the table with favorability score for each item with the table with favorability score for each factor
-colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score")
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
 combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
 combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
 print(combined_favorability_df)
 
-# Distinguish the average rows from other item rows
-highlight_questions <- combined_favorability_df$question_number[c(1, 5, 9, 15, 21)]
-
-combined_favorability_df$highlight <- ifelse(
-  combined_favorability_df$question_number %in% highlight_questions,
-  "first",
-  "other"
-)
-
-ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE) + 
-  labs(x = "Factor", y = "Favorability Score", title = "Favorability Score for Each Factor") + 
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item") + 
   theme_minimal() + 
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),  
     plot.title = element_text(hjust = 0.5)
   ) +
-  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
 
 
 #create a df storing each group's enagement factor favorability score gradually.
 engagement_by_tenure <- data.frame(
-  question_number = "All",  
+  question_number = "Overall",  
   favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
 
 engagement_by_tenure
-```
-  * 2. Calculate engagement factor scores by all tenure groups (need to clarify this question..)
-    - a. engagement factor favorable scores for employees whose tenure are "Under 3 Months".
-      n = 47
-```{r}
-df_2[df_2$tenure_group == "Under 3 months" & !is.na(df_2$tenure_group), ]
 
+
+
+#create a graph that shows enagement favorable score across tenure groups (all)
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # Purple for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+
+```
+  * 2. Calculate engagement factor (favorable) scores by all tenure groups (need to clarify this question..)
+    - a. engagement factor favorable scores for employees whose tenure are "Under 3 Months".
+      n = 34
+      
+```{r}
 # Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
 favorability_score <- function_favorability(df_2[df_2$tenure_group == "Under 3 months", 8:12])
 
@@ -482,26 +555,84 @@ print(favorability_score_with_average_percent)
 # Distinguish the average row from other item rows
 favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
 
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # Purple for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
 ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with Under 3 Months Tenure") + 
-  theme_minimal() + 
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with Under 3 Months Tenure") + 
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 1), 
-    plot.title = element_text(hjust = 0.5)  
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
   ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
-
-
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
 
 #append this group's engagement factor favorability score to the tenure group df
 engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
 engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "Under 3 Months"
 
 ```
-  
-    - b.engagement factor favorability scores for employees whose tenure are "6-12 months".
-      n = 290
+  - b.engagement factor favorability scores for employees whose tenure are "3-6 months".
+      n = 203
+```{r}
+#3-6 months
+df_2[df_2$tenure_group == "3-6 months" & !is.na(df_2$tenure_group), ]
+# Calculate favorability_score for columns 8 to 12 (engagement questions)
+favorability_score <- function_favorability(df_2[df_2$tenure_group == "3-6 months", 8:12])
+
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate the average engagement factor favorable score for those with 3-6 months tenure
+average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+
+average_row <- data.frame(
+  question_number = "average",  
+  favorability_score = average_score
+)
+
+favorability_score_with_average <- rbind(favorability_score, average_row)
+print(favorability_score_with_average)
+
+favorability_score_with_average_percent <- favorability_score_with_average
+favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
+
+print(favorability_score_with_average_percent)
+#visualize the favorability scores
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+# graph showing engagement factor scores for the 3-6 months tenure group
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with 3-6 Months Tenure") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+
+
+#append this group's engagement factor favorability score to the tenure group df
+engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
+engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "3-6 Months"
+```  
+    - c.engagement factor favorability scores for employees whose tenure are "6-12 months".
+      n = 287
 ```{r}
 #6-12 months
 df_2[df_2$tenure_group == "6-12 months" & !is.na(df_2$tenure_group), ]
@@ -533,24 +664,31 @@ print(favorability_score_with_average_percent)
 # Distinguish the average row from other item rows
 favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
 
+# graph showing engagement factor scores for the 6-12 months tenure group
 ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 6-12 Months Tenure") + 
-  theme_minimal() + 
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with 6-12 Months Tenure") + 
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 1), 
-    plot.title = element_text(hjust = 0.5)  
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
   ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+
 
 #append this group's engagement factor favorability score to the tenure group df
 engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
 engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "6-12 Months"
 ```  
    
-    - c. engagement factor favorability scores for employees whose tenure are "1-2 years".
-      N = 429
+    - d. engagement factor favorability scores for employees whose tenure are "1-2 years".
+      N = 442
 ```{r}
+
 #1-2 years
 df_2[df_2$tenure_group == "1-2 years" & !is.na(df_2$tenure_group), ]
 # Calculate favorability_score for columns 8 to 12 (engagement questions)
@@ -580,15 +718,22 @@ print(favorability_score_with_average_percent)
 # Distinguish the average row from other item rows
 favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
 
+
+# graph showing engagement factor scores for the 1-2 years tenure group
 ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 1-2 Years Tenure") + 
-  theme_minimal() + 
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with 1-2 years Tenure") + 
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 1), 
-    plot.title = element_text(hjust = 0.5)  
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
   ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+
 
 #append this group's engagement factor favorability score to the tenure group df
 engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
@@ -597,8 +742,8 @@ engagement_by_tenure$question_number[engagement_by_tenure$question_number == "av
 ```  
 
 
-    - d. engagement factor favorability scores for employees whose tenure are "2-4 years".
-      n = 380
+    - e. engagement factor favorability scores for employees whose tenure are "2-4 years".
+      n = 388
 ```{r}
 #2-4 years
 df_2[df_2$tenure_group == "2-4 years" & !is.na(df_2$tenure_group), ]
@@ -627,18 +772,26 @@ print(favorability_score_with_average_percent)
 #visualize the favorability scores
 
 
+
+
 # Distinguish the average row from other item rows
 favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
 
+
+# graph showing engagement factor scores for the 2-4 years tenure group
 ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 2-4 Years Tenure") + 
-  theme_minimal() + 
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with 2-4 years Tenure") + 
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 1), 
-    plot.title = element_text(hjust = 0.5)  
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
   ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
    
    
 #append this group's engagement factor favorability score to the tenure group df
@@ -646,8 +799,8 @@ engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
 engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "2-4 Years"
 
 ```
-    - e. engagement factor scores for employees whose tenure are "4-6 years".
-      N = 154
+    - f. engagement factor scores for employees whose tenure are "4-6 years".
+      N = 165
 ```{r}
 #4-6 years
 df_2[df_2$tenure_group == "4-6 years" & !is.na(df_2$tenure_group), ]
@@ -673,21 +826,26 @@ favorability_score_with_average_percent <- favorability_score_with_average
 favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
 
 print(favorability_score_with_average_percent)
-#visualize the favorability scores
-
 
 # Distinguish the average row from other item rows
 favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
 
+
+# graph showing engagement factor scores for the 4-6 years tenure group
 ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 4-6 Years Tenure") + 
-  theme_minimal() + 
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with 4-6 years Tenure") + 
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 1), 
-    plot.title = element_text(hjust = 0.5)  
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
   ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+   
 
 
 #append this group's engagement factor favorability score to the tenure group df
@@ -695,9 +853,10 @@ engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
 engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "4-6 Years"
 
 ```
-     - f. engagement factor scores for employees whose tenure are "6-10 years".
-       N = 29
+     - g. engagement factor scores for employees whose tenure are "6-10 years".
+       N = 87
 ```{r}
+
 #6-10 years
 df_2[df_2$tenure_group == "6-10 years" & !is.na(df_2$tenure_group), ]
 # Calculate favorability_score for columns 8 to 12 (engagement questions)
@@ -723,31 +882,39 @@ favorability_score_with_average_percent <- favorability_score_with_average
 favorability_score_with_average_percent$favorability_score <- round(favorability_score_with_average_percent $favorability_score,2)*100
 
 print(favorability_score_with_average_percent)
-#visualize the favorability scores
+
 
 
 # Distinguish the average row from other item rows
 favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
 
-ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with 6-10 Years Tenure") + 
-  theme_minimal() + 
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 1), 
-    plot.title = element_text(hjust = 0.5)  
-  ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
 
+# graph showing engagement factor scores for the 6-10 years tenure group
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Employees with 6-10 years Tenure") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
 
 #append this group's engagement factor favorability score to the tenure group df
 engagement_by_tenure <- rbind(engagement_by_tenure, average_row)
 engagement_by_tenure$question_number[engagement_by_tenure$question_number == "average"] <- "6-10 Years"
 
 ```
-   - g. engagement factor scores for employees whose tenure are "10+ years".
-    N = 4, given that this cateogry has less than 4 employees, we don't report it.
+   - h. engagement factor scores for employees whose tenure are "10+ years".
+    N = 2, given that this category has less than 5 employees, we don't report it.
 ```{r}
+
+#it is critical that there are only 2 employees who have worked longer than 10 years.
+
 #10+ years
 df_2[df_2$tenure_group == "10+ years" & !is.na(df_2$tenure_group), ]
 # Calculate favorability_score for columns 8 to 12 (engagement questions)
@@ -788,19 +955,19 @@ ggplot(favorability_score_with_average_percent, aes(x = question_number, y = fav
   ) +
    geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
 ```
-   - h. engagement factor scores for employees whose tenure are "hired on or after 2022-08-01".
-     N = 55 (wait for what Vivian says)
+   - i. engagement factor scores for employees whose tenure are "hired on or after 2024-03-01".
+     N = 11 (wait for what Vivian says)
 ```{r}
-#hired on or after 2022-08-01 
-df_2[df_2$tenure_group == "hired on or after 2022-08-01" & !is.na(df_2$tenure_group), ]
+#hired on or after 2024-03-01 
+df_2[df_2$tenure_group == "hired on or after 2024-03-01" & !is.na(df_2$tenure_group), ]
 
 # Calculate favorability_score for columns 8 to 12 (engagement questions)
-favorability_score <- function_favorability(df_2[df_2$tenure_group == "hired on or after 2022-08-01", 8:12])
+favorability_score <- function_favorability(df_2[df_2$tenure_group == "hired on or after 2024-03-01", 8:12])
 
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
 
-# Calculate the average engagement factor favorable score for those who were hired on or after 2020-08-01
+# Calculate the average engagement factor favorable score for those who were hired on or after 2024-03-01
 average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
 
 
@@ -824,7 +991,7 @@ favorability_score_with_average_percent$highlight <- ifelse(favorability_score_w
 
 ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
   geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees Hired On Or After 2020-08-01") + 
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees Hired On Or After 2024-03-01") + 
   theme_minimal() + 
   theme(
     axis.text.x = element_text(angle = 0, hjust = 1), 
@@ -833,24 +1000,33 @@ ggplot(favorability_score_with_average_percent, aes(x = question_number, y = fav
    geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
 
 ```
-  
-  - i. Engagement factor favorability scores for employees by tenure
+
+    - j. Engagement factor favorable scores across tenure groups (employee life cycle)
 ```{r}
 engagement_by_tenure$favorability_score <- round(engagement_by_tenure$favorability_score*100)
 engagement_by_tenure$question_number <- factor(engagement_by_tenure$question_number, levels = engagement_by_tenure$question_number)
+
+engagement_by_tenure
 # Distinguish the average row from other item rows
 engagement_by_tenure$highlight <- ifelse(engagement_by_tenure$question_number == engagement_by_tenure$question_number[1], "first", "other")
 
 
+# graph showing engagement factor scores across tenure groups 
 ggplot(engagement_by_tenure, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorability Scores by Tenure") + 
-  theme_minimal() + 
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores Across Tenure Groups") + 
+  theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5), 
-    plot.title = element_text(hjust = 0.5)  
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 11),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
   ) +
-   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+
+
 ```
   
   * 3. Calculate favorable scores for all questions and factors by gender
@@ -889,6 +1065,21 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
+
+
+
+# Distinguish the average row from other item rows
+favorability_score_with_average_percent$highlight <- ifelse(favorability_score_with_average_percent$question_number == favorability_score_with_average_percent$question_number[6], "first", "other")
+
+ggplot(favorability_score_with_average_percent, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Favorability Scores for Employees with Over 10 Years Tenure") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1), 
+    plot.title = element_text(hjust = 0.5)  
+  ) +
+   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5)
 ```
     - c. favorable scores for all questions for male
         N for male = 1830
