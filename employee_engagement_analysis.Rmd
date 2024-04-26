@@ -235,7 +235,7 @@ tenure_months <- as.numeric(difftime(cutpoint, df$hiredate, units = "days")/(365
 #create tenure_groups 
 tenure_groups <- cut(tenure_months,
                       breaks = c(0, 3, 6, 12, 24, 48, 72, 120, Inf),  # In months
-                      labels = c("Under 3 months", "3-6 months", "1-2 years", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years"), right = FALSE) # right = FALSE to EXCLUDE the right side month in the cateogry
+                      labels = c("Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years"), right = FALSE) # right = FALSE to EXCLUDE the right side month in the cateogry
 
 #the distribution of employees in each tenure group
 table(tenure_groups, useNA = "always")
@@ -484,6 +484,7 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
       n = 64
       
 ```{r}
+
 # Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
 favorability_score <- function_favorability(df_2[df_2$tenure_group == "Under 3 months", 8:12])
 
@@ -941,8 +942,9 @@ ggplot(engagement_by_tenure, aes(x = question_number, y = favorability_score, fi
 ```
   
   * 3. Calculate favorable scores for all questions and factors by gender
-    - a. favorable scores for all questions for women
+    - a. favorable scores for all questions and factors for women
         - N for female = 820
+        
 ```{r}
 table(df_2$gender)
 df_2[df_2$gender== "Female" & !is.na(df_2$gender), ]
@@ -956,7 +958,6 @@ favorability_score_percent <- favorability_score
 favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
   
 
-
 library(dplyr)
 favorability_score_percent$Factor <- dplyr::case_when(
   favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
@@ -967,15 +968,9 @@ favorability_score_percent$Factor <- dplyr::case_when(
   TRUE ~ "Other")
 
 
-
 print(favorability_score_percent)
 
 
-
-```
-    - b. factor favorable scores for all factors for female
-        - N for female = 820
-```{r}
 ## Create an empty data frame to save the calculated factor_favorable_score for each factor
 factor_favorable_score <- data.frame(factor_abbreviation = character(),
                                      factor_favorable_score = numeric(),
@@ -998,13 +993,7 @@ for (factor_abbr in factor_abbreviations) {
 
 print(factor_favorable_score)
 
-
 #change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
-
-
-#change the factor favorable scores into percentage 
 factor_favorability_score_percent <- factor_favorable_score
 factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
@@ -1016,7 +1005,6 @@ factor_favorability_score_percent$Factor <- dplyr::case_when(
   factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
   factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
   TRUE ~ "Other")
-
 
 
 #combine the table with favorable score for each item with the table with favorable score for each factor
@@ -1062,8 +1050,7 @@ engagement_by_tenure <- data.frame(
 engagement_by_tenure
 
 
-
-#create a graph that shows enagement favorable score across tenure groups (all)
+#create a graph that shows engagement favorable score across tenure groups (all)
 
 engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
 
@@ -1076,6 +1063,8 @@ engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_scor
 # Create a color palette to specify the average factor favorable score from others
 highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
                       "other" = "#AEBAC2")  # Grey for the 'other' category
+
+#Create a ggplot that shows engagement factor favorable scores for women
 
 ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
   geom_bar(stat = "identity", show.legend = FALSE) +  
@@ -1091,11 +1080,10 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
   scale_fill_manual(values = highlight_colors)  
 
-
-
 ```
-    - c. favorable scores for all questions for male
-        N for male = 1830
+    
+    - b. favorable scores for all questions and factors for men
+        N = 1830
 ```{r}
 # Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
 favorability_score <- function_favorability(df_2[df_2$gender == "Male", 2:21])
@@ -1119,11 +1107,6 @@ favorability_score_percent$Factor <- dplyr::case_when(
 
 print(favorability_score_percent)
 
-```
-  
-    - d. favorable scores for all questions by male
-         N for male = 1830
-```{r}
 ## Create an empty data frame to save the calculated factor_favorable_score for each factor
 factor_favorable_score <- data.frame(factor_abbreviation = character(),
                                      factor_favorable_score = numeric(),
@@ -1147,7 +1130,6 @@ for (factor_abbr in factor_abbreviations) {
 print(factor_favorable_score)
 
 
-
 #change the factor favorable scores into percentage 
 factor_favorability_score_percent <- factor_favorable_score
 factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
@@ -1160,7 +1142,6 @@ factor_favorability_score_percent$Factor <- dplyr::case_when(
   factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
   factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
   TRUE ~ "Other")
-
 
 
 #combine the table with favorable score for each item with the table with favorable score for each factor
@@ -1183,7 +1164,7 @@ ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score
   scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
 
   
-## Create a ggplot bar plot for factor favorable scores
+## Create a ggplot bar plot for factor favorable scores 
 
 library(ggplot2)
 ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
@@ -1217,9 +1198,10 @@ engagement_favorable_score_for_all
 engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
 
 # Create a color palette to specify the average factor favorable score from others
-highlight_colors <- c("first" = "#5E81AC",  # Purple for the 'first' category
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
                       "other" = "#AEBAC2")  # Grey for the 'other' category
 
+# create a graph that shows engagement factor favorable scores for men 
 ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
   geom_bar(stat = "identity", show.legend = FALSE) +  
   labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men") + 
@@ -1235,8 +1217,8 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   scale_fill_manual(values = highlight_colors)  
 ```
  
- 
- - e. favorable scores for all questions for women for Under 3 months
+
+ - c. favorable scores for all questions for women for Under 3 months
       N = 25
 ```{r}
 df_2[
@@ -1254,7 +1236,6 @@ print(favorability_score)
 favorability_score_percent <- favorability_score 
 favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
   
-
 
 library(dplyr)
 favorability_score_percent$Factor <- dplyr::case_when(
@@ -1290,11 +1271,6 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
-
-
-#change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
 
 #change the factor favorable scores into percentage 
@@ -1356,7 +1332,7 @@ engagement_by_tenure
 
 
 
-#create a graph that shows enagement favorable score across tenure groups (all)
+#create a graph that shows engagement favorable scores for women with tenure under 3 months  
 
 engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
 
@@ -1384,7 +1360,8 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
   scale_fill_manual(values = highlight_colors)  
 ```
-- f. favorable scores for all questions for women with tenure between 3-6 months 
+
+- d. favorable scores for all questions for women with tenure between 3-6 months 
       N = 116
 ```{r}
 table(df_2$gender, df_2$tenure_group)
@@ -1404,7 +1381,6 @@ favorability_score_percent <- favorability_score
 favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
   
 
-
 library(dplyr)
 favorability_score_percent$Factor <- dplyr::case_when(
   favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
@@ -1413,7 +1389,6 @@ favorability_score_percent$Factor <- dplyr::case_when(
   favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
   favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
   TRUE ~ "Other")
-
 
 
 print(favorability_score_percent)
@@ -1439,11 +1414,6 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
-
-
-#change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
 
 #change the factor favorable scores into percentage 
@@ -1530,7 +1500,7 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
   scale_fill_manual(values = highlight_colors)  
 ```
- - g. favorable scores for all questions for women with tenure between 6-12 months 
+ - f. favorable scores for all questions for women with tenure between 6-12 months 
       N = 181
 ```{r}
 table(df_2$gender, df_2$tenure_group)
@@ -1585,11 +1555,6 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
-
-
-#change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
 
 #change the factor favorable scores into percentage 
@@ -1677,8 +1642,12 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
   scale_fill_manual(values = highlight_colors)  
 ```
-- h. favorable scores for all questions for women with tenure between 1-2 years 
+
+
+- e. favorable scores for all questions for women with tenure between 1-2 years 
       N = 211
+      
+      
 ```{r}
 table(df_2$gender, df_2$tenure_group)
 df_2[
@@ -1732,11 +1701,6 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
-
-
-#change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
 
 #change the factor favorable scores into percentage 
@@ -1825,8 +1789,11 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   scale_fill_manual(values = highlight_colors)  
 ```
 
-- i. favorable scores for all questions for women with tenure between 2-4 years 
+
+- f. favorable scores for all questions for women with tenure between 2-4 years 
       N = 191
+      
+      
 ```{r}
 table(df_2$gender, df_2$tenure_group)
 df_2[
@@ -1883,11 +1850,6 @@ print(factor_favorable_score)
 
 
 #change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
-
-
-#change the factor favorable scores into percentage 
 factor_favorability_score_percent <- factor_favorable_score
 factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
@@ -1973,8 +1935,11 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   scale_fill_manual(values = highlight_colors)  
 ```
 
-- j. favorable scores for all questions for women with tenure between 4-6 years 
+
+- g. favorable scores for all questions for women with tenure between 4-6 years 
       N = 58
+      
+      
 ```{r}
 table(df_2$gender, df_2$tenure_group)
 df_2[
@@ -2034,10 +1999,6 @@ print(factor_favorable_score)
 factor_favorability_score_percent <- factor_favorable_score
 factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
-
-#change the factor favorable scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
 library(dplyr)
 factor_favorability_score_percent$Factor <- dplyr::case_when(
@@ -2121,7 +2082,7 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   scale_fill_manual(values = highlight_colors)  
 ```
 
-- k. favorable scores for all questions for women with tenure between 4-6 years 
+- h. favorable scores for all questions for women with tenure between 6-10 years 
       N = 37
 ```{r}
 table(df_2$gender, df_2$tenure_group)
@@ -2176,11 +2137,6 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 print(factor_favorable_score)
-
-
-#change the favorability scores into percentage 
-factor_favorability_score_percent <- factor_favorable_score
-factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
 
 
 #change the factor favorable scores into percentage 
@@ -2268,58 +2224,1117 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
   scale_fill_manual(values = highlight_colors)  
 ```
-  * 4. Correlate all non-engagement questions to the engagement factor for Hooli Overall.
-        a. for all employees
+ 
+ - i. favorable scores for all questions for Men for Under 3 months
+      N = 39
 ```{r}
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "Under 3 months" & 
+  !is.na(df_2$gender), ]
 
-# create a new variable named 'engagement_factor', which represents each employee's average of engagement scores. 
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "Under 3 months" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+#change the factor favorable scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure under 3 Months") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure under 3 Months") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "Under 3 months",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+
+#create a graph that shows engagement favorable score across tenure groups 
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure Under 3 Months") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+```
+  - j. favorable scores for all questions for Men with tenure between 3-6 months 
+      N = 116
+```{r}
+table(df_2$gender, df_2$tenure_group)
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "3-6 months" & 
+  !is.na(df_2$gender), ]
+
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "3-6 months" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+
+#change the favorability scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 3-6 months") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 3-6 months") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "3-6 months",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure between 3-6 Months") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+```
+ 
+ - k. favorable scores for all questions for Men with tenure between 6-12 months 
+      N = 181
+      
+```{r}
+table(df_2$gender, df_2$tenure_group)
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "6-12 months" & 
+  !is.na(df_2$gender), ]
+
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "6-12 months" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+
+#change the factor favorable scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 6-12 months") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 6-12 months") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "6-12 months",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure between 6 and 12 Months") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+```
+
+- l. favorable scores for all questions for Men with tenure between 1-2 years 
+      N = 
+      
+```{r}
+table(df_2$gender, df_2$tenure_group)
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "1-2 years" & 
+  !is.na(df_2$gender), ]
+
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "1-2 years" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+
+
+#change the factor favorable scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 1-2 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 1-2 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "1-2 years",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure between 1-2 Years") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+```
+
+  - n. favorable scores for all questions for Men with tenure between 2-4 years 
+      N = 
+      
+```{r}
+table(df_2$gender, df_2$tenure_group)
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "2-4 years" & 
+  !is.na(df_2$gender), ]
+
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "2-4 years" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+
+#change the favorability scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 2-4 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 2-4 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "2-4 years",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure between 2-4 Years") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+```
+
+  - m. favorable scores for all questions for Men with tenure between 4-6 years 
+      N = 
+```{r}
+table(df_2$gender, df_2$tenure_group)
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "4-6 years" & 
+  !is.na(df_2$gender), ]
+
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "4-6 years" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+
+#change the favorability scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 4-6 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 4-6 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "4-6 years",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure between 4-6 Years") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
+```
+
+  - o. favorable scores for all questions for Men with tenure between 6-10 years 
+      N = 
+```{r}
+table(df_2$gender, df_2$tenure_group)
+df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "6-10 years" & 
+  !is.na(df_2$gender), ]
+
+# Calculate favorability_score for columns 2 to 21 by using function_favorability I created.
+favorability_score <- function_favorability(df_2[
+  df_2$gender == "Male" & 
+  df_2$tenure_group == "6-10 years" , 2:21])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+favorability_score_percent <- favorability_score 
+favorability_score_percent$favorability_score <- round(favorability_score_percent$favorability_score,2)*100
+  
+
+
+library(dplyr)
+favorability_score_percent$Factor <- dplyr::case_when(
+  favorability_score_percent$question_number %in% c("ali_1", "ali_2", "ali_3") ~ "Alignment",
+  favorability_score_percent$question_number %in% c("col_1", "col_2", "col_3") ~ "Collaboration",
+  favorability_score_percent$question_number %in% c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5") ~ "Engagement",
+  favorability_score_percent$question_number %in% c("inc_1", "inc_2", "inc_3", "inc_4", "inc_5") ~ "Inclusion",
+  favorability_score_percent$question_number %in% c("lea_1", "lea_2", "lea_3", "lea_4") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+print(favorability_score_percent)
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(factor_favorable_score,
+                                  data.frame(factor_abbreviation = factor_abbr,
+                                             factor_favorable_score = avg_favorable_score))
+}
+
+print(factor_favorable_score)
+
+
+#change the favorability scores into percentage 
+factor_favorability_score_percent <- factor_favorable_score
+factor_favorability_score_percent$factor_favorable_score <- round(factor_favorability_score_percent$factor_favorable_score,2)*100
+
+library(dplyr)
+factor_favorability_score_percent$Factor <- dplyr::case_when(
+  factor_favorability_score_percent$factor_abbreviation %in% c("ali") ~ "Alignment",
+  factor_favorability_score_percent$factor_abbreviation %in% c("col") ~ "Collaboration",
+  factor_favorability_score_percent$factor_abbreviation %in% c("eng") ~ "Engagement",
+  factor_favorability_score_percent$factor_abbreviation %in% c("inc") ~ "Inclusion",
+  factor_favorability_score_percent$factor_abbreviation %in% c("lea") ~ "Leadership",
+  TRUE ~ "Other")
+
+
+
+#combine the table with favorable score for each item with the table with favorable score for each factor
+colnames(factor_favorability_score_percent) <- c("question_number", "favorability_score", "Factor")
+combined_favorability_df <- rbind(favorability_score_percent, factor_favorability_score_percent)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+## Create a ggplot bar plot with the preselected colors
+library(ggplot2)
+ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 6-10 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+  
+## Create a ggplot bar plot for factor favorable scores
+
+library(ggplot2)
+ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
+  geom_bar(stat = "identity", show.legend = TRUE) + 
+  labs(x = "Question Item", y = "Favorability Score", title = "Favorable Score for Each Factor and Question Item for Men with Tenure between 6-10 years") + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5) +  # Add text labels to the bars
+  scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
+
+
+#create a df storing each group's engagement factor favorability score gradually.
+engagement_by_tenure <- data.frame(
+  question_number = "6-10 years",  
+  favorability_score = factor_favorable_score$factor_favorable_score[factor_favorable_score$factor_abbreviation == "eng"])
+
+engagement_by_tenure
+
+
+
+engagement_favorable_score_for_all <- combined_favorability_df[combined_favorability_df$question_number %in% c("eng", "eng_1", "eng_2", "eng_3", "eng_4", "eng_5"), ]
+
+
+engagement_favorable_score_for_all
+
+# Distinguish the average row from other item rows
+engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  
+  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores for Men with Tenure between 6-10 Years") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  scale_fill_manual(values = highlight_colors) 
+```
+
+ 
+  * 4. Correlate all non-engagement questions to the engagement factor for Hooli Overall.
+      -  a. for all employees (Kendall's tau-b)
+      The results from the correlations calculated by conducting Kendall's tau-b and pearson's r are largley convergent while kendall's tau-b's results are much more conservative in terms of the size of the correlations. 
+
+```{r}
+#Create a new variable named 'engagement_factor', representing the average engagement scores.
 df_2$engagement_factor <- rowMeans(df_2[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
 
+#Select only the numeric columns from 'df_2' excluding 'eng_1' to 'eng_5'
 numeric_df_2 <- Filter(is.numeric, df_2)
-
 library(dplyr)
 numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
 
-correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
-correlation_matrix
 
-library(corrplot)
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
 corrplot(correlation_matrix, type = "upper", order = "hclust")
 
-# Extract the correlations for "engagement_factor"
+# Extract correlations for "engagement_factor"
 engagement_correlations <- correlation_matrix[, "engagement_factor"]
 
 engagement_factor_correlation_table <- data.frame(
-  variable = names(engagement_correlations),  
-  correlation = engagement_correlations  
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
 )
 
 engagement_factor_correlation_table <- engagement_factor_correlation_table[
   engagement_factor_correlation_table$variable != "engagement_factor", 
 ]
-# Sort the data frame by correlation 
-engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
-  arrange(correlation)  # Ascending order
 
-# Reorder the factor levels based on the new order
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
 engagement_factor_correlation_table$variable <- factor(
   engagement_factor_correlation_table$variable,
-  levels = engagement_factor_correlation_table$variable  
+  levels = engagement_factor_correlation_table$variable
 )
 
-# Create a ggplot with horizontal bars in ascending order
-library(ggplot2)
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
 ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
-  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +  
-  labs(x = "Correlation", y = "Variable", title = "Correlations with Engagement Factor") +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement", caption = "Correlations calculated using Pearson's r"
+  ) +
   theme_minimal() +
   theme(
-    axis.text.y = element_text(size = 12),  
-    axis.title = element_text(size = 14),  
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
   )
+
 ```
-        b. for female employees
+
+     -  b. for women only (correlation calculated by conducting kendall's tau-b)
 ```{r}
 
 library(dplyr)
@@ -2331,56 +3346,105 @@ df_2_female <- df_2 %>%
 # Calculate the engagement factor for female employees
 df_2_female$engagement_factor <- rowMeans(df_2_female[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
 
-# Display a few rows to check the new variable
-head(df_2_female)
 
 numeric_df_2 <- Filter(is.numeric, df_2_female)
-
 library(dplyr)
 numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
 
-correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
-correlation_matrix
 
-library(corrplot)
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Women", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
 corrplot(correlation_matrix, type = "upper", order = "hclust")
 
-# Extract the correlations for "engagement_factor"
+# Extract correlations for "engagement_factor"
 engagement_correlations <- correlation_matrix[, "engagement_factor"]
 
 engagement_factor_correlation_table <- data.frame(
-  variable = names(engagement_correlations),  
-  correlation = engagement_correlations  
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
 )
 
 engagement_factor_correlation_table <- engagement_factor_correlation_table[
   engagement_factor_correlation_table$variable != "engagement_factor", 
 ]
-# Sort the data frame by correlation 
-engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
-  arrange(correlation)  # Ascending order
 
-# Reorder the factor levels based on the new order
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
 engagement_factor_correlation_table$variable <- factor(
   engagement_factor_correlation_table$variable,
-  levels = engagement_factor_correlation_table$variable  
+  levels = engagement_factor_correlation_table$variable
 )
 
-# Create a ggplot with horizontal bars in ascending order
-library(ggplot2)
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
 ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
-  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +  
-  labs(x = "Correlation", y = "Variable", title = "Correlations with Engagement Factor for Women") +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Women", caption = "Correlations calculated using Pearson's r"
+  ) +
   theme_minimal() +
   theme(
-    axis.text.y = element_text(size = 12),  
-    axis.title = element_text(size = 14),  
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
   )
-```
-   b. for male employees
-```{r}
 
+```
+   c. for male employees (correlation calculated by conducting kendall's tau-b)
+```{r}
 library(dplyr)
 
 # Subset df_2 to include only female employees
@@ -2394,48 +3458,100 @@ df_2_male$engagement_factor <- rowMeans(df_2_male[, c("eng_1", "eng_2", "eng_3",
 head(df_2_male)
 
 numeric_df_2 <- Filter(is.numeric, df_2_male)
-
 library(dplyr)
 numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
 
-correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
-correlation_matrix
 
-library(corrplot)
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Men", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
 corrplot(correlation_matrix, type = "upper", order = "hclust")
 
-# Extract the correlations for "engagement_factor"
+# Extract correlations for "engagement_factor"
 engagement_correlations <- correlation_matrix[, "engagement_factor"]
 
 engagement_factor_correlation_table <- data.frame(
-  variable = names(engagement_correlations),  
-  correlation = engagement_correlations  
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
 )
 
 engagement_factor_correlation_table <- engagement_factor_correlation_table[
   engagement_factor_correlation_table$variable != "engagement_factor", 
 ]
-# Sort the data frame by correlation 
-engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
-  arrange(correlation)  # Ascending order
 
-# Reorder the factor levels based on the new order
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
 engagement_factor_correlation_table$variable <- factor(
   engagement_factor_correlation_table$variable,
-  levels = engagement_factor_correlation_table$variable  
+  levels = engagement_factor_correlation_table$variable
 )
 
-# Create a ggplot with horizontal bars in ascending order
-library(ggplot2)
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
 ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
-  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +  
-  labs(x = "Correlation", y = "Variable", title = "Correlations with Engagement Factor for Men") +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Men", caption = "Correlations calculated using Pearson's r"
+  ) +
   theme_minimal() +
   theme(
-    axis.text.y = element_text(size = 12),  
-    axis.title = element_text(size = 14),  
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
   )
+
 ```
   * 5. Calculate engagement & leadership factor scores for all countries.
     - a. Australia's N = 101
@@ -2469,10 +3585,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "Australia"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```
@@ -2505,10 +3627,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "Canada"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```
@@ -2541,10 +3669,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "China"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```
@@ -2577,10 +3711,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "Denmark"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```
@@ -2613,10 +3753,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "France"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```  
@@ -2650,10 +3796,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "Germany"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```
@@ -2689,10 +3841,16 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "India"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 
@@ -2728,11 +3886,195 @@ for (factor_abbr in factor_abbreviations) {
   avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
   
   # Add each factor favorable score to the data frame
-  factor_favorable_score <- rbind(factor_favorable_score,
-                                  data.frame(factor_abbreviation = factor_abbr,
-                                             factor_favorable_score = avg_favorable_score))
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "United Kingdom"  # Add the country label
+    )
+  )
 }
+
 
 print(factor_favorable_score)
 ```
+
+    - i. United States' N = 1551
+    
+```{r}
+
+df_2[df_2$country == "United States" & !is.na(df_2$country), ]
+
+# Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
+favorability_score <- function_favorability(df_2[df_2$country == "United Kingdom", c(8:12, 18:21)])
+colnames(favorability_score)[1] <- "question_number"
+print(favorability_score)
+
+# Calculate factor favorability score for engagement & leadership 
+
+## Extract factor abbreviations first
+factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number)) #substitute "-.*" to " " then only save unique abbreviations
+
+## Create an empty data frame to save the calculated factor_favorable_score for each factor
+factor_favorable_score <- data.frame(factor_abbreviation = character(),
+                                     factor_favorable_score = numeric(),
+                                     stringsAsFactors = FALSE)
+
+## Calculate the average favorable score for each factor by using this function:
+for (factor_abbr in factor_abbreviations) {
+  # Subset favorable scores for questions belonging to the factor by using 'factor_abbreviations' vector 
+  factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    #use grep to find 'factor_abbre_" in favorability_score df
+  
+  # Calculate the average favorable score for the factor
+  avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)  # Add na.rm = TRUE to handle missing values
+  
+  # Add each factor favorable score to the data frame
+  factor_favorable_score <- rbind(
+    factor_favorable_score,
+    data.frame(
+      factor_abbreviation = factor_abbr,
+      factor_favorable_score = avg_favorable_score,
+      country = "United States"  # Add the country label
+    )
+  )
+}
+
+
+print(factor_favorable_score)
+```
+     - j. create a visual that compares factor favorable scores for engagement & leadership across countries
+     
+```{r}
+#Create an empty data frame to save the consolidated favorable_scores
+consolidated_favorable_scores <- data.frame(
+  factor_abbreviation = character(),
+  factor_favorable_score = numeric(),
+  country = character(),
+  stringsAsFactors = FALSE
+)
+
+#list of countries
+countries <- c("Australia", "Canada", "China", "Denmark", "France", "Germany", "India", "United Kingdom", "United States")  
+
+#Loop through each country and calculate factor favorable score
+for (country in countries) {
+  #Filter data for the specific country
+  country_df <- df_2[df_2$country == country & !is.na(df_2$country), ]
+  
+  #Calculate favorability_score using a custom function
+  favorability_score <- function_favorability(country_df[, c(8:12, 18:21)])
+  colnames(favorability_score)[1] <- "question_number"
+  
+  factor_abbreviations <- unique(sub("_.*", "", favorability_score$question_number))
+  
+  #Create a data frame for this country's factor_favorable_score (so a dataframe within a loop)
+  factor_favorable_score <- data.frame(
+    factor_abbreviation = character(),
+    factor_favorable_score = numeric(),
+    country = character(),
+    stringsAsFactors = FALSE
+  )
+  
+  #Calculate the average favorable score for each factor
+  for (factor_abbr in factor_abbreviations) {
+    #Subset favorable scores for the factor
+    factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    
+    #Calculate the average favorable score
+    avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)
+    
+    #Append the calculated score to the country's data frame
+    factor_favorable_score <- rbind(
+      factor_favorable_score,
+      data.frame(
+        factor_abbreviation = factor_abbr,
+        factor_favorable_score = avg_favorable_score,
+        country = country  # Add the country label
+      )
+    )
+  }
+  
+  #Consolidate this country's data frame into the main consolidated data frame
+  consolidated_favorable_scores <- rbind(
+    consolidated_favorable_scores,
+    factor_favorable_score
+  )
+}
+
+print(consolidated_favorable_scores)
+
+
+#Sort the data frame by factor_favorable_score 
+consolidated_favorable_scores <- consolidated_favorable_scores %>%
+  arrange(desc(factor_favorable_score))
+
+#Reorder the factor levels based on the sorted data frame
+consolidated_favorable_scores$factor_abbreviation <- factor(
+  consolidated_favorable_scores$factor_abbreviation,
+  levels = unique(consolidated_favorable_scores$factor_abbreviation)  
+)
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+# Filter the data into two subsets: one for 'lea' (leadership factor) and one for 'eng' (engagement factor)
+leadership_scores <- consolidated_favorable_scores %>%
+  filter(factor_abbreviation == "lea")
+
+engagement_scores <- consolidated_favorable_scores %>%
+  filter(factor_abbreviation == "eng")
+
+# Reorder the factor levels based on the sorted data frame
+leadership_scores$country <- factor(
+  leadership_scores$country,
+  levels = unique(leadership_scores$country)
+)
+
+engagement_scores$country <- factor(
+  engagement_scores$country,
+  levels = unique(engagement_scores$country)
+)
+
+# Create ggplot for leadership scores
+ggplot(leadership_scores, aes(x = country, y = factor_favorable_score * 100, fill = country)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  geom_text(
+    aes(label = paste0(round(factor_favorable_score * 100, 1), "%")),
+    position = position_dodge(width = 0.9),
+    vjust = -0.5  # Position the text above the bars
+  ) +
+  labs(
+    x = "Country",
+    y = "Leadership Favorability Score (%)",
+    title = "Leadership Factor Favorable Scores by Country (%)"
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  )
+
+# Create ggplot for engagement scores
+ggplot(engagement_scores, aes(x = country, y = factor_favorable_score * 100, fill = country)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  geom_text(
+    aes(label = paste0(round(factor_favorable_score * 100, 1), "%")),
+    position = position_dodge(width = 0.9),
+    vjust = -0.5  # Position the text above the bars
+  ) +
+  labs(
+    x = "Country",
+    y = "Engagement Favorability Score (%)",
+    title = "Engagement Factor Favorable Scores by Country (%)"
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  )
+```
+     
      
