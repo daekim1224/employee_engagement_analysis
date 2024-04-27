@@ -3596,7 +3596,49 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 
+
+
 print(factor_favorable_score)
+
+favorability_score$Country <- "Australia" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for Aussie employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for Aussie Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1)) 
 ```
     - b. Canada's N = 84
 ```{r}
@@ -3638,7 +3680,49 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 
+
+
 print(factor_favorable_score)
+
+favorability_score$Country <- "Canada" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for Danish employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for Canadian Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))
 ```
     - c. China's N = 60
 ```{r}
@@ -3680,7 +3764,49 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 
+
+
 print(factor_favorable_score)
+
+favorability_score$Country <- "China" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for Chinese employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for Chinese Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))
 ```
     - d. Denmark's N = 24
 ```{r}
@@ -3722,7 +3848,48 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 
+
 print(factor_favorable_score)
+
+favorability_score$Country <- "Denmark" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for Danish employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for Danish Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))  
 ```
     - e. France's N = 136
 ```{r}
@@ -3764,7 +3931,49 @@ for (factor_abbr in factor_abbreviations) {
 }
 
 
+
 print(factor_favorable_score)
+
+favorability_score$Country <- "France" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for French employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for French Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))  
+
 ```  
     - f. Germany's N = 48
 
@@ -3808,6 +4017,48 @@ for (factor_abbr in factor_abbreviations) {
 
 
 print(factor_favorable_score)
+
+favorability_score$Country <- "Germany" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for German employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for German Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))  
+
+
 ```
 
     - g. India's N = 288
@@ -3854,6 +4105,47 @@ for (factor_abbr in factor_abbreviations) {
 
 print(factor_favorable_score)
 
+favorability_score$Country <- "India" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for Indian employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for Indian Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))  
+
+
 ```
 
     - h. United Kingdom's N = 359
@@ -3898,6 +4190,48 @@ for (factor_abbr in factor_abbreviations) {
 
 
 print(factor_favorable_score)
+
+favorability_score$Country <- "United Kingdom" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for U.S. employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for U.K. Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))  
+
+
 ```
 
     - i. United States' N = 1551
@@ -3907,7 +4241,7 @@ print(factor_favorable_score)
 df_2[df_2$country == "United States" & !is.na(df_2$country), ]
 
 # Calculate favorability_score for columns 8 to 12 (engagement questions) by using function_favorability I created.
-favorability_score <- function_favorability(df_2[df_2$country == "United Kingdom", c(8:12, 18:21)])
+favorability_score <- function_favorability(df_2[df_2$country == "United States", c(8:12, 18:21)])
 colnames(favorability_score)[1] <- "question_number"
 print(favorability_score)
 
@@ -3941,8 +4275,48 @@ for (factor_abbr in factor_abbreviations) {
   )
 }
 
-
 print(factor_favorable_score)
+
+favorability_score$Country <- "United States" 
+
+#let's combine these two dfs
+colnames(factor_favorable_score) <- c("question_number", "favorability_score", "Country")
+combined_favorability_df <- rbind(favorability_score, factor_favorable_score)
+combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
+print(combined_favorability_df)
+
+#let's only keep engagement scores
+
+engagement_favorable_scores <- combined_favorability_df[1:6, ] 
+print(engagement_favorable_scores)
+
+
+# Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_scores$question_number == engagement_favorable_scores $question_number[1], "first", "other")
+
+# Create a color palette to specify the average factor favorable score from others
+highlight_colors <- c("first" = "#5E81AC",  # blue for the 'first' category
+                      "other" = "#AEBAC2")  # Grey for the 'other' category
+
+
+library(scales)
+
+# Create a ggplot that shows engagement factor favorable scores for U.S. employees
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE, width = 0.6) +  
+  labs(x = "Factor Items", y = "Favorability Score (%)", title = "Engagement Factor Favorable Scores for U.S. Employees") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
+    axis.text.y = element_text(size = 12),  
+    plot.title = element_text(hjust = 0.5, size = 16), 
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14) 
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score * 100), "%")), vjust = -0.5, size = 4) + 
+  scale_fill_manual(values = highlight_colors) +  
+  scale_y_continuous(labels = percent_format(accuracy = 1))  
+
 ```
      - j. create a visual that compares factor favorable scores for engagement & leadership across countries
      
