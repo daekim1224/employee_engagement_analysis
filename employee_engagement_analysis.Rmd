@@ -1,13 +1,16 @@
 ---
-title: "employee_engagement_analysis"
+title: "employee_engagement_analysis for Hooli"
 author: "Daehyeon (Dae) Kim"
 date: "2024-04-15"
-output: html_document : github_document
+output:
+  html_document: default  
+  github_document: default  
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 # Overview of This Report
 
 This document shows my R codes that I used to clean and analyze Hooli's employee survey data. 
@@ -3229,7 +3232,7 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
 
  
   * 4. Correlate all non-engagement questions to the engagement factor for Hooli Overall.
-      -  a. for all employees (Kendall's tau-b)
+      -  a. for all employees & all non-engagement items (Kendall's tau-b)
       The results from the correlations calculated by conducting Kendall's tau-b and pearson's r are largley convergent while kendall's tau-b's results are much more conservative in terms of the size of the correlations. 
 
 ```{r}
@@ -3288,6 +3291,7 @@ ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = var
   )
 
 
+library(corrplot)
 # Recreate the Pearson's r correlation matrix to see if they are too divergent
 correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
 corrplot(correlation_matrix, type = "upper", order = "hclust")
@@ -3323,6 +3327,77 @@ ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) 
   geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
   geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
   labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement", caption = "Correlations calculated using Pearson's r"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2 %>%
+  mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_factor_scores <- subset(composite_scores, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement", caption = "Correlations calculated using Kendall's tau-b"
   ) +
   theme_minimal() +
   theme(
@@ -3442,12 +3517,86 @@ ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) 
     plot.caption = element_text(size = 10, hjust = 0)
   )
 
+
+
+
+
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2[df_2$gender == "Female", ] %>%
+  mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_factor_scores <- subset(composite_scores, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement for Women", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
 ```
    c. for male employees (correlation calculated by conducting kendall's tau-b)
 ```{r}
 library(dplyr)
 
-# Subset df_2 to include only female employees
+# Subset df_2 to include only male employees
 df_2_male <- df_2 %>%
   filter(gender == "Male")
 
@@ -3552,7 +3701,806 @@ ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) 
     plot.caption = element_text(size = 10, hjust = 0)
   )
 
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2[df_2$gender == "Male", ] %>%
+  mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_factor_scores <- subset(composite_scores, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement for Men", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
 ```
+     d. for Indian employees (correlation calculated by conducting kendall's tau-b)
+```{r}
+library(dplyr)
+
+# Subset df_2 to include only Indian employees
+df_2_india <- df_2 %>%
+  filter(country == "India")
+
+# Calculate the engagement factor for female employees
+df_2_india$engagement_factor <- rowMeans(df_2_india[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
+
+# Display a few rows to check the new variable
+head(df_2_india)
+
+numeric_df_2 <- Filter(is.numeric, df_2_india)
+library(dplyr)
+numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Indian Employees", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
+corrplot(correlation_matrix, type = "upper", order = "hclust")
+
+# Extract correlations for "engagement_factor"
+engagement_correlations <- correlation_matrix[, "engagement_factor"]
+
+engagement_factor_correlation_table <- data.frame(
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
+)
+
+engagement_factor_correlation_table <- engagement_factor_correlation_table[
+  engagement_factor_correlation_table$variable != "engagement_factor", 
+]
+
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
+engagement_factor_correlation_table$variable <- factor(
+  engagement_factor_correlation_table$variable,
+  levels = engagement_factor_correlation_table$variable
+)
+
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
+ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Indian Employees", caption = "Correlations calculated using Pearson's r"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2[df_2$country == "India", ] %>%
+  mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_factor_scores <- subset(composite_scores, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement for Indian Employees", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+```
+    e. for German employees (correlation calculated by conducting kendall's tau-b)
+```{r}
+library(dplyr)
+
+# Subset df_2 to include only Indian employees
+df_2_germany <- df_2 %>%
+  filter(country == "Germany")
+
+# Calculate the engagement factor for german employees
+df_2_germany$engagement_factor <- rowMeans(df_2_germany[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
+
+# Display a few rows to check the new variable
+head(df_2_germany)
+
+numeric_df_2 <- Filter(is.numeric, df_2_germany)
+library(dplyr)
+numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for German Employees", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
+corrplot(correlation_matrix, type = "upper", order = "hclust")
+
+# Extract correlations for "engagement_factor"
+engagement_correlations <- correlation_matrix[, "engagement_factor"]
+
+engagement_factor_correlation_table <- data.frame(
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
+)
+
+engagement_factor_correlation_table <- engagement_factor_correlation_table[
+  engagement_factor_correlation_table$variable != "engagement_factor", 
+]
+
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
+engagement_factor_correlation_table$variable <- factor(
+  engagement_factor_correlation_table$variable,
+  levels = engagement_factor_correlation_table$variable
+)
+
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
+ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for German Employees", caption = "Correlations calculated using Pearson's r"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2[df_2$country == "Germany", ] %>%
+  mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_factor_scores <- subset(composite_scores, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement for German Employees", caption = "Correlations calculated using Kendall's tau-b"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+```
+  f. for employees who are high (engagement factor composite score > or = 4) on employee_engagement (correlation calculated by conducting kendall's tau-b)
+```{r}
+library(dplyr)
+
+# Calculate the engagement factor for employees
+df_2$engagement_factor <- rowMeans(df_2[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
+
+hist(df_2$engagement_factor)
+
+high_engagement <- df_2 %>%
+  filter(engagement_factor >= 4)
+
+numeric_df_2 <- Filter(is.numeric, high_engagement)
+library(dplyr)
+numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for highly engaging employees", caption = "Correlations calculated using Kendall's tau-b | employees with engagement composite factor score greater than or equal to 4 are only included for analysis"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
+corrplot(correlation_matrix, type = "upper", order = "hclust")
+
+# Extract correlations for "engagement_factor"
+engagement_correlations <- correlation_matrix[, "engagement_factor"]
+
+engagement_factor_correlation_table <- data.frame(
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
+)
+
+engagement_factor_correlation_table <- engagement_factor_correlation_table[
+  engagement_factor_correlation_table$variable != "engagement_factor", 
+]
+
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
+engagement_factor_correlation_table$variable <- factor(
+  engagement_factor_correlation_table$variable,
+  levels = engagement_factor_correlation_table$variable
+)
+
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
+ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Highly Engaged Employees", caption = "Correlations calculated using Pearson's r | employees with engagement composite factor score greater than or equal to 4 are only included for analysis"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2 %>% mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_scores_high <- composite_scores %>%
+  filter(Engagement >= 4)
+
+composite_factor_scores <- subset(composite_scores_high, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores_high, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement for Highly Engaged Employees", caption = "Correlations calculated using Kendall's tau-b | employees with engagement composite factor score greater than or equal to 4 are only included for analysis" 
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+```
+ 
+ g. for employees who are low (engagement factor composite score < or = 2) on employee_engagement (correlation calculated by conducting kendall's tau-b) = 47 employees only
+```{r}
+library(dplyr)
+
+# Calculate the engagement factor for employees
+df_2$engagement_factor <- rowMeans(df_2[, c("eng_1", "eng_2", "eng_3", "eng_4", "eng_5")], na.rm = TRUE)
+
+hist(df_2$engagement_factor)
+
+
+low_engagement <- df_2 %>%
+  filter(engagement_factor <= 2)
+
+numeric_df_2 <- Filter(is.numeric, low_engagement)
+library(dplyr)
+numeric_df_2 <- subset(numeric_df_2, select= -c(eng_1, eng_2, eng_3, eng_4, eng_5))
+
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(numeric_df_2, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "engagement_factor"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "engagement_factor", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[13:15, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Less Engaged employees", caption = "Correlations calculated using Kendall's tau-b | Only employees with engagement composite factor score lower than or equal to 2 are included for this analysis"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+# Recreate the Pearson's r correlation matrix to see if they are too divergent
+correlation_matrix <- cor(numeric_df_2, use = "complete.obs")
+corrplot(correlation_matrix, type = "upper", order = "hclust")
+
+# Extract correlations for "engagement_factor"
+engagement_correlations <- correlation_matrix[, "engagement_factor"]
+
+engagement_factor_correlation_table <- data.frame(
+  variable = names(engagement_correlations),
+  correlation = engagement_correlations
+)
+
+engagement_factor_correlation_table <- engagement_factor_correlation_table[
+  engagement_factor_correlation_table$variable != "engagement_factor", 
+]
+
+# Sort in descending order to get the strongest correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table %>%
+  arrange(correlation)
+
+# Keep only the top 3 correlations
+engagement_factor_correlation_table <- engagement_factor_correlation_table[13:15,]
+
+# Reorder the factor levels
+engagement_factor_correlation_table$variable <- factor(
+  engagement_factor_correlation_table$variable,
+  levels = engagement_factor_correlation_table$variable
+)
+
+
+# Create a ggplot with horizontal bars for the top 3 Pearson's r correlations
+ggplot(engagement_factor_correlation_table, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Top 3 Factors with Strongest Associations to Employee Engagement for Less Engaged Employees", caption = "Correlations calculated using Pearson's r | Only employees with engagement composite factor score lower than or equal to 2 are included for this analysis"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+
+
+#engagement factor's correlations with other factors
+library(dplyr)
+
+#Create a df with composite factor scores for each group of items
+composite_scores <- df_2 %>% mutate(
+    Alignment = rowMeans(select(., ali_1:ali_3), na.rm = TRUE),  # Alignment score
+    Collaboration = rowMeans(select(., col_1:col_3), na.rm = TRUE),  # Collaboration score
+    Engagement = rowMeans(select(., eng_1:eng_5), na.rm = TRUE),  # Engagement score
+    Inclusion = rowMeans(select(., inc_1:inc_5), na.rm = TRUE),  # Inclusion score
+    Leadership = rowMeans(select(., lea_1:lea_4), na.rm = TRUE)  # Leadership score
+  ) %>%
+  # Select only the composite factor scores and an identifier (if needed)
+  select(Alignment, Collaboration, Engagement, Inclusion, Leadership)
+
+# Print the new data frame to ensure it contains the expected composite scores
+print(composite_scores)
+
+composite_scores_low <- composite_scores %>%
+  filter(Engagement <= 2)
+
+composite_factor_scores <- subset(composite_scores_low, select= c(Alignment, Collaboration, Inclusion, Leadership))
+print(composite_factor_scores)
+
+engagement_factor_scores <- subset(composite_scores_low, select= -c(Alignment, Collaboration, Inclusion, Leadership))
+print(engagement_factor_scores)
+
+#Conduct Kendall's tau-b correlation to get correlations
+correlation_matrix_kendall <- cor(composite_scores, method = "kendall", use = "complete.obs")
+
+#Extract the correlations for "engagement_factor"
+engagement_correlations_kendall <- correlation_matrix_kendall[, "Engagement"]
+
+engagement_factor_correlation_table_kendall <- data.frame(
+  variable = names(engagement_correlations_kendall),
+  correlation = engagement_correlations_kendall
+)
+
+#Remove 'engagement_factor' and sort by correlation in descending order
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[
+  engagement_factor_correlation_table_kendall$variable != "Engagement", 
+]
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall %>%
+  arrange(correlation)
+
+#Keep only the top 3 strongest correlations
+engagement_factor_correlation_table_kendall <- engagement_factor_correlation_table_kendall[1:4, ]
+
+# Reorder the factor levels based on the new order
+engagement_factor_correlation_table_kendall$variable <- factor(
+  engagement_factor_correlation_table_kendall$variable,
+  levels = engagement_factor_correlation_table_kendall$variable
+)
+
+# Use scales package to format correlations as percentages
+library(scales)
+
+
+# Create a ggplot with horizontal bars for the top 3 Kendall's tau-b correlations
+ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = variable)) +
+  geom_bar(stat = "identity", fill = "purple", alpha = 0.7) +
+  geom_text(aes(label = percent(correlation, accuracy = 1)), hjust = -0.1, size = 3.5, color = "black")  +
+  labs(x = "Correlation", y = "Variable", title = "Factors' relationships with Employee Engagement for Less Engaged Employees", caption = "Correlations calculated using Kendall's tau-b | Only employees with engagement composite factor score lower than or equal to 2 are included for analysis" 
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+
+```
+ 
+ 
   * 5. Calculate engagement & leadership factor scores for all countries.
     - a. Australia's N = 101
    
