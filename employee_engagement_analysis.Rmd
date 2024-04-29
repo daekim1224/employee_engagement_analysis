@@ -8,8 +8,8 @@ output:
     df_print: paged
     code_folding: hide
     number_sections: true
-    fig_width: 11
-    fig_height: 8
+    fig_width: 10
+    fig_height: 4.5
     fig_caption: true
     toc: true
     toc_depth: 4
@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 <br>
 <br>
 
-This document shows my R codes that I used to prepare and analyze Hooli's employee survey data. Please use the table of content on the left side of this document to navigate the document. If you click "Show" button in each section, you can see my code. The document is structured as follows: <br>
+This document shows my R codes that I used to prepare and analyze Hooli's employee survey data. Please use the table of content on the left side of this document to navigate the document. If you click "Show" button in each section, you can see my codes. The document is structured as follows: <br>
 
 * 1. Overview of this document 
 
@@ -39,7 +39,7 @@ This document shows my R codes that I used to prepare and analyze Hooli's employ
 * 3. Data Analysis 
 
     - 3.1 Calculate the favorable scores for all questions and factors for Hooli overall 
-    - 3.2 Calculate engagement factor (favorable) scores) for all tenure groups 
+    - 3.2 Calculate engagement factor (favorable) scores for all tenure groups 
     - 3.3 Calculate favorable scores for all questions and factors by gender 
     - 3.4 Correlate all on-engagement questions to the engagement factor for Hooli overall 
     - 3.5 Calculate engagement & leadership factor (favorable) scores for all countries 
@@ -456,9 +456,6 @@ Favorable scores are defined as the sum of the number of answers that are agree 
 <br>
 <br>
 ```{r}
-favorability_ali_1 <- sum(df_2$ali_1 %in% c(4,5))/sum(df_2$ali_1 %in% c(1:5))
-favorability_ali_1
-
 #let's create a function that automates the process of calculating favorable scores for all questions at once:
 
 function_favorability <- function(df) {
@@ -579,7 +576,7 @@ combined_favorability_df <- rbind(favorability_score_percent, factor_favorabilit
 combined_favorability_df <- combined_favorability_df[order(combined_favorability_df$question_number), ]
 print(combined_favorability_df)
 
-## Create a ggplot bar plot with the preselected colors
+## Create a ggplot bar plot with the preselected colors (vertical)
 library(ggplot2)
 ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score, fill = Factor)) +
   geom_bar(stat = "identity", show.legend = TRUE) + 
@@ -593,7 +590,7 @@ ggplot(combined_favorability_df, aes(x = question_number, y = favorability_score
   scale_fill_manual(values = group_colors)  # Apply custom colors to the bars
 
   
-## Create a ggplot bar plot for factor favorable scores
+## Create a ggplot bar plot for factor favorable scores (vertical)
 
 library(ggplot2)
 ggplot(factor_favorability_score_percent, aes(x = question_number, y = favorability_score, fill = Factor)) +
@@ -624,26 +621,46 @@ engagement_favorable_score_for_all <- combined_favorability_df[combined_favorabi
 
 engagement_favorable_score_for_all
 
-# Distinguish the average row from other item rows
+#Desired order of question_number in reverse as I am making a horizontal graph
+desired_order <- c("eng_5", "eng_4", "eng_3", "eng_2", "eng_1", "eng")
+
+#Set the factor levels in reverse order
+engagement_favorable_score_for_all$question_number <- factor(
+  engagement_favorable_score_for_all$question_number,
+  levels = (desired_order)  # Reverse the desired order
+)
+
+#Distinguish the average row from other item rows
 engagement_favorable_score_for_all$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_score_for_all$question_number[1], "first", "other")
 
-# Create a color palette to specify the average factor favorable score from others
-highlight_colors <- c("first" = "#5E81AC",  # Purple for the 'first' category
-                      "other" = "#AEBAC2")  # Grey for the 'other' category
+#Color palette for highlighting
+highlight_colors <- c("first" = "#9A36B2",  # Purple for the 'first' category
+                      "other" = "#C9A5DD")  # light purple for the 'other' category
 
+#Create a horizontal bar plot with ggplot
 ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorability_score, fill = highlight)) +
-  geom_bar(stat = "identity", show.legend = FALSE) +  
-  labs(x = "Factor Items", y = "Favorability Score", title = "Engagement Factor Favorable Scores") + 
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12),
-    axis.text.y = element_text(size = 12),  
-    plot.title = element_text(hjust = 0.5, size = 16), 
-    axis.title.x = element_text(size = 14), 
-    axis.title.y = element_text(size = 14) 
+  geom_bar(stat = "identity", show.legend = FALSE) + 
+  coord_flip() +  
+  labs(
+    x = "Factor Items",  
+    y = "Favorability Score", 
+    title = "Engagement Factor Favorable Scores",
+    caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses. Factor favorability score is an average of all the items for the factor."  # Add the caption
   ) +
-  geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
+  theme_minimal() + 
+  theme(
+    axis.text.y = element_text(size = 12),  
+    axis.text.x = element_text(size = 12), 
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14),
+  plot.caption = element_text(size = 6, hjust = 0)  
+  ) +
+  geom_text(aes(label = paste0(favorability_score, "%")), 
+            hjust = -0.3,  
+            size = 4) +  
   scale_fill_manual(values = highlight_colors)  
+
 
 ```
 <br>
@@ -1169,6 +1186,269 @@ ggplot(engagement_by_tenure, aes(x = question_number, y = favorability_score, fi
 
 
 ```
+<br>
+<br>
+   
+### Changes in employee engagement favorable scores over employee life cycle (line graphs)
+
+<br>
+<br>
+   
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+table(df_2$tenure_group)
+#List of tenure groups
+tenure_groups <- c("Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years")
+
+#Create an empty data frame to store the consolidated results
+consolidated_favorability_scores <- data.frame(
+  tenure_group = character(),
+  question_number = character(),
+  favorability_score = numeric(),
+  stringsAsFactors = FALSE
+)
+
+#Loop through each tenure group and calculate favorability scores
+for (group in tenure_groups) {
+  #Calculate favorability scores
+  favorability_score <- function_favorability(df_2[df_2$tenure_group == group, c(8:12)])  # Example column range
+  colnames(favorability_score)[1] <- "question_number"
+  
+  #Calculate the average favorability score
+  average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+  
+  #Create the "average" row
+  average_row <- data.frame(
+    question_number = "average",  
+    favorability_score = average_score
+  )
+  
+  #Add the "average" row to the data frame
+  favorability_score <- rbind(favorability_score, average_row)
+  
+  #Add the tenure group to the data frame
+  favorability_score <- favorability_score %>%
+    mutate(tenure_group = group)  # Label with the tenure group
+  
+  #Append to the consolidated data frame
+  consolidated_favorability_scores <- rbind(
+    consolidated_favorability_scores,
+    favorability_score
+  )
+}
+
+#set the order for tenure grouops in the new df
+consolidated_favorability_scores <- consolidated_favorability_scores %>%
+  mutate(tenure_group = factor(tenure_group, levels = tenure_groups))  # Set the levels
+
+
+print(consolidated_favorability_scores)
+
+# line graph showing each engagement factor's change over time
+ggplot(consolidated_favorability_scores, aes(x = tenure_group, y = favorability_score * 100, group = question_number, color = question_number)) +
+  geom_line(size = 1.2) + 
+  geom_point(size = 3) +  
+  labs(
+    x = "Tenure Group",
+    y = "Favorability Score (%)",
+    title = "Change in Engagement Favorable Scores Across Employee Lifecycle",
+    caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses.", 
+    color = "Engagement Questions"  
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  plot.caption = element_text(size = 6, hjust = 0)    
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1))  
+
+
+#create another line graph in which I emphasize average, eng_4, and eng_5
+
+
+# Assign colors or line styles to emphasize specific lines
+line_colors <- c(
+  "average" = "red",  # Emphasize the "average" line with red color
+  "eng_4" = "blue",  # Emphasize "eng_4" with blue
+  "eng_5" = "orange",  # Emphasize "eng_5" with orange
+  "other" = "gray"  # Use a neutral color for other lines
+)
+
+# Create a line plot with customized colors for emphasis
+ggplot(consolidated_favorability_scores, aes(x = tenure_group, y = favorability_score * 100, group = question_number)) +
+  geom_line(aes(color = ifelse(question_number %in% c("average", "eng_4", "eng_5"), question_number, "other")), size = 1.2) +  # Draw lines with custom colors
+  geom_point(aes(color = ifelse(question_number %in% c("average", "eng_4", "eng_5"), question_number, "other")), size = 3) +  # Add points with matching colors
+  labs(
+    x = "Tenure Group",
+    y = "Favorability Score (%)",
+    title = "Change in Engagement Favorability Scores Across Employee Lifecycle",
+    caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses.",  # Detailed caption
+    color = "Engagement Questions"  # Custom legend title
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  plot.caption = element_text(size = 6, hjust = 0)    
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +  # Display y-axis as percentage
+  scale_color_manual(values = line_colors)  # Assign specific colors to lines
+
+
+
+
+
+#Create an empty data frame to store the consolidated results for men and women separately
+
+consolidated_favorability_scores_men <- data.frame(
+  tenure_group = character(),
+  question_number = character(),
+  favorability_score = numeric(),
+  stringsAsFactors = FALSE
+)
+
+consolidated_favorability_scores_women <- data.frame(
+  tenure_group = character(),
+  question_number = character(),
+  stringsAsFactors = FALSE
+)
+
+# Define tenure groups, excluding '10+ years'
+tenure_groups <- c("Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years")
+
+# Function to calculate favorability scores and add tenure groups
+calculate_scores_by_tenure <- function(data, tenure_groups) {
+  consolidated_scores <- data.frame(
+    tenure_group = character(),
+    question_number = character(),
+    favorability_score = numeric(),
+    stringsAsFactors = FALSE
+  )
+
+  for (group in tenure_groups) {
+    # Calculate favorability scores for each tenure group
+    favorability_score <- function_favorability(data[data$tenure_group == group, c(8:12)])  # Example column range
+    colnames(favorability_score)[1] <- "question_number"
+    
+    # Calculate the average favorability score
+    average_score <- mean(favorability_score$favorability_score, na.rm = TRUE)
+    
+    # Create the "average" row
+    average_row <- data.frame(
+      question_number = "average",
+      favorability_score = average_score
+    )
+    
+    # Add the "average" row to the data frame
+    favorability_score <- rbind(favorability_score, average_row)
+    
+    # Add the tenure group to the data frame
+    favorability_score <- favorability_score %>%
+      mutate(tenure_group = group)  # Label with the tenure group
+    
+    # Append to the consolidated data frame
+    consolidated_scores <- rbind(
+      consolidated_scores,
+      favorability_score
+    )
+  }
+
+  # Set the order for tenure groups
+  consolidated_scores <- consolidated_scores %>%
+    mutate(tenure_group = factor(tenure_group, levels = tenure_groups))
+  
+  return(consolidated_scores)
+}
+
+# Calculate scores for men and women, excluding '10+ years'
+consolidated_favorability_scores_men <- calculate_scores_by_tenure(df_2[df_2$gender == "Male" & df_2$tenure_group != "10+ years", ], tenure_groups)
+consolidated_favorability_scores_women <- calculate_scores_by_tenure(df_2[df_2$gender == "Female" & df_2$tenure_group != "10+ years", ], tenure_groups)
+
+# Now create the line plots for men and women, excluding '10+ years'
+# Line plot for men
+ggplot(consolidated_favorability_scores_men, aes(x = tenure_group, y = favorability_score * 100, group = question_number, color = question_number)) +
+  geom_line(size = 1.2) +  # Draw lines
+  geom_point(size = 3) +  # Add points
+  labs(
+    x = "Tenure Group",
+    y = "Favorability Score (%)",
+    title = "Change in Engagement Favorability Scores for Men Across Employee Lifecycle",
+     caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses.",  # Detailed caption
+    color = "Engagement Questions"  # Custom legend title
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 8, hjust = 0)    
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1))  # Display y-axis as percentage
+
+# Line plot for men
+ggplot(consolidated_favorability_scores_men, aes(x = tenure_group, y = favorability_score * 100, group = question_number, color = question_number)) +
+  geom_line(size = 1.2) +  # Draw lines
+  geom_point(size = 3) +  # Add points
+  labs(
+    x = "Tenure Group",
+    y = "Favorability Score (%)",
+    title = "Change in Engagement Favorability Scores for Men Across Employee Lifecycle",
+     caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses.",  # Detailed caption
+    color = "Engagement Questions"  # Custom legend title
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 8, hjust = 0)    
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +  # Display y-axis as percentage
+  scale_color_manual(values = line_colors)
+
+# Line plot for women
+ggplot(consolidated_favorability_scores_women, aes(x = tenure_group, y = favorability_score * 100, group = question_number, color = question_number)) +
+  geom_line(size = 1.2) +  # Draw lines
+  geom_point(size = 3) +  # Add points
+  labs(
+    x = "Tenure Group",
+    y = "Favorability Score (%)",
+    title = "Change in Engagement Favorability Scores for Women Across Employee Lifecycle",
+     caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses.",  # Detailed caption
+    color = "Engagement Questions"  # Custom legend title
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 8, hjust = 0)    
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1))
+
+# Line plot for women
+ggplot(consolidated_favorability_scores_women, aes(x = tenure_group, y = favorability_score * 100, group = question_number, color = question_number)) +
+  geom_line(size = 1.2) +  # Draw lines
+  geom_point(size = 3) +  # Add points
+  labs(
+    x = "Tenure Group",
+    y = "Favorability Score (%)",
+    title = "Change in Engagement Favorability Scores for Women Across Employee Lifecycle",
+     caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses.",  # Detailed caption
+    color = "Engagement Questions"  # Custom legend title
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 8, hjust = 0)    
+  ) +
+ scale_y_continuous(labels = percent_format(scale = 1)) +  # Display y-axis as percentage
+  scale_color_manual(values = line_colors)
+
+```
+
   
 <br>
 <br>
@@ -1460,6 +1740,72 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   geom_text(aes(label = paste0(favorability_score, "%")), vjust = -0.5, size = 4) +  
   scale_fill_manual(values = highlight_colors)  
 ```
+<br>
+<br>
+
+### a graph comparing enagement factor favorable scores between men and women
+
+<br>
+<br>
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Calculate engagement favorability scores for all employees
+all_employees_favorability_score <- function_favorability(df_2[, 8:12])
+all_employees_favorability_score$gender <- "All Employees"  # Label as 'All Employees'
+
+# Calculate engagement favorability scores for men
+men_df <- df_2[df_2$gender == "Male", ]
+men_favorability_score <- function_favorability(men_df[, 8:12])
+men_favorability_score$gender <- "Men"  # Label as 'Men'
+
+# Calculate engagement favorability scores for women
+women_df <- df_2[df_2$gender == "Female", ]
+women_favorability_score <- function_favorability(women_df[, 8:12])
+women_favorability_score$gender = "Women"  # Label as 'Women'
+
+# Combine all the scores into a single data frame
+combined_favorability_scores <- rbind(
+  all_employees_favorability_score,
+  men_favorability_score,
+  women_favorability_score
+)
+
+# Convert favorability scores to percentages
+combined_favorability_scores$favorability_score <- combined_favorability_scores$favorability_score * 100
+
+# Rename the first column to "question_number"
+colnames(combined_favorability_scores)[1] = "question_number"
+
+# Create a bar graph with ggplot2
+ggplot(combined_favorability_scores, aes(x = question_number, y = favorability_score, fill = gender)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  labs(
+    x = "Engagement Question",
+    y = "Favorability Score (%)",
+    title = "Engagement Favorability Scores by Gender",
+    caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses."
+    )+
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),  # Rotate x-axis labels
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  plot.caption = element_text(size = 6, hjust = 0)    # Style the title
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score, 1), "%")),  # Add percentage labels
+            position = position_dodge(width = 0.9),
+            vjust = -0.5,
+            size = 3.5) +  # Adjust text size
+  scale_fill_manual(  # Custom colors for gender
+    values = c("Men" = "skyblue", "Women" = "purple", "All Employees" = "gray")
+  )
+```
+
+
+<br>
+<br>
+
 <br>
 <br>
    
@@ -3539,6 +3885,9 @@ ggplot(engagement_favorable_score_for_all, aes(x = question_number, y = favorabi
   scale_fill_manual(values = highlight_colors) 
 ```
 
+<br>
+<br>
+
  
 <br>
 <br>
@@ -4984,7 +5333,8 @@ ggplot(engagement_scores, aes(x = country, y = factor_favorable_score * 100, fil
   geom_text(
     aes(label = paste0(round(factor_favorable_score * 100, 1), "%")),
     position = position_dodge(width = 0.9),
-    vjust = -0.5  # Position the text above the bars
+      vjust = -0.5,
+    size = 3
   ) +
   labs(
     x = "Country",
@@ -4995,6 +5345,197 @@ ggplot(engagement_scores, aes(x = country, y = factor_favorable_score * 100, fil
   theme_minimal() +
   theme(
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  )
+```
+
+
+```{r}
+# Create a dataframe to save the consolidated factor scores
+consolidated_favorable_scores <- data.frame(
+  factor_abbreviation = character(),
+  factor_favorable_score = numeric(),
+  country = character(),
+  stringsAsFactors = FALSE
+)
+
+# List of countries
+countries <- c("Australia", "Canada", "China", "Denmark", "France", "Germany", "India", "United Kingdom", "United States")
+
+# Loop through each country and calculate factor favorable score
+for (country in countries) {
+  # Filter data for the specific country
+  country_df <- df_2[df_2$country == country & !is.na(df_2$country), ]
+
+  # Calculate favorability_score using a custom function for leadership factor
+  favorability_score <- function_favorability(country_df[, c(18:21)])  # 'lea' questions
+  colnames(favorability_score)[1] <- "question_number"
+
+  # Create a data frame for this country's factor_favorable_score
+  factor_favorable_score <- data.frame(
+    factor_abbreviation = character(),
+    factor_favorable_score = numeric(),
+    country = character(),
+    stringsAsFactors = FALSE
+  )
+
+  # Calculate the average favorable score for each factor
+  for (factor_abbr in unique(sub("_.*", "", favorability_score$question_number))) {
+    # Subset favorable scores for the factor
+    factor_scores <- favorability_score[grep(paste0("^", factor_abbr, "_"), favorability_score$question_number), ]
+    
+    # Calculate the average favorable score
+    avg_favorable_score <- mean(factor_scores$favorability_score, na.rm = TRUE)
+    
+    # Append the calculated score to the data frame
+    factor_favorable_score <- rbind(
+      factor_favorable_score,
+      data.frame(
+        factor_abbreviation = factor_abbr,
+        factor_favorable_score = avg_favorable_score,
+        country = country  # Add the country label
+      )
+    )
+  }
+
+  # Consolidate this country's data frame into the main consolidated data frame
+  consolidated_favorable_scores <- rbind(
+    consolidated_favorable_scores,
+    factor_favorable_score
+  )
+}
+
+# Now calculate the company's average leadership score based on all employees
+all_employees_df <- df_2  # Full dataset
+company_favorability_score <- function_favorability(all_employees_df[, c(18:21)])  # 'lea' questions
+company_avg_leadership_score <- mean(company_favorability_score$favorability_score, na.rm = TRUE)  # Average leadership factor
+
+# Create a row for the company's average score
+company_average_row <- data.frame(
+  factor_abbreviation = "lea",
+  factor_favorable_score = company_avg_leadership_score,
+  country = "Company Average"  # Label for the overall company
+)
+
+# Add the company's average to the consolidated data frame
+consolidated_favorable_scores <- rbind(company_average_row, consolidated_favorable_scores)
+
+# Define the desired order for the countries
+desired_order <- c("Company Average", "India", "France", "Australia", "United Kingdom", "Germany", "Canada", "Denmark", "China", "United States")
+
+# Reorder the factor levels for proper display
+consolidated_favorable_scores$country <- factor(
+  consolidated_favorable_scores$country,
+  levels = desired_order  # 'Company Average' first, then other countries in the desired order
+)
+
+# Create a ggplot for leadership scores including the company average
+ggplot(consolidated_favorable_scores, aes(x = country, y = factor_favorable_score * 100, fill = country)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  geom_text(
+    aes(label = paste0(round(factor_favorable_score * 100, 1), "%")),
+    position = position_dodge(width = 0.9),
+    vjust = -0.5,
+    size = 3
+  ) +
+  labs(
+    x = "Country",
+    y = "Leadership Favorability Score (%)",
+    title = "Leadership Factor Favorable Scores by Country (%)"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis labels for readability
+  )
+
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+# Create a dataframe to save the consolidated factor scores
+consolidated_favorable_scores <- data.frame(
+  factor_abbreviation = character(),
+  factor_favorable_score = numeric(),
+  country = character(),
+  stringsAsFactors = FALSE
+)
+
+# List of countries
+countries <- c("India", "Canada", "France", "Australia", "United Kingdom", "Denmark", "China", "United States", "Germany")
+
+# Loop through each country and calculate factor favorable score
+for (country in countries) {
+  # Filter data for the specific country
+  country_df <- df_2[df_2$country == country & !is.na(df_2$country), ]
+
+  # Calculate favorability_score using a custom function for 'eng' questions (Engagement)
+  favorability_score <- function_favorability(country_df[, c(8:12)])
+  colnames(favorability_score)[1] <- "question_number"
+
+  # Create a data frame for this country's factor_favorable_score
+  factor_favorable_score <- data.frame(
+    factor_abbreviation = "eng",
+    factor_favorable_score = mean(favorability_score$favorability_score, na.rm = TRUE),
+    country = country
+  )
+
+  # Consolidate this country's data frame into the main consolidated data frame
+  consolidated_favorable_scores <- rbind(consolidated_favorable_scores, factor_favorable_score)
+}
+
+
+# Now calculate the company's average leadership score based on all employees
+all_employees_df <- df_2  # Full dataset
+company_favorability_score <- function_favorability(all_employees_df[, c(8:12)])  # 'eng' questions
+company_avg_engagement_score <- mean(company_favorability_score$favorability_score, na.rm = TRUE)  # Average engagement factor
+
+# Create a row for the company's average score
+company_average_row <- data.frame(
+  factor_abbreviation = "eng",
+  factor_favorable_score = company_avg_engagement_score,
+  country = "Company Average"  # Label for the overall company
+)
+
+
+# Add the company's average engagement score to the consolidated data frame
+company_average_row <- data.frame(
+  factor_abbreviation = "eng",
+  factor_favorable_score = company_avg_engagement_score,
+  country = "Company Average"
+)
+consolidated_favorable_scores <- rbind(company_average_row, consolidated_favorable_scores)
+
+# Define the desired order for the countries
+desired_order <- c("Company Average", "India", "Canada", "France", "Australia", "United Kingdom", "Denmark", "China", "United States", "Germany")
+
+# Reorder the countries for proper display
+consolidated_favorable_scores$country <- factor(
+  consolidated_favorable_scores$country,
+  levels = desired_order
+)
+
+# Create ggplot for engagement scores
+ggplot(consolidated_favorable_scores, aes(x = country, y = factor_favorable_score * 100, fill = country)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  geom_text(
+    aes(label = paste0(round(factor_favorable_score * 100, 1), "%")),  
+    position = position_dodge(width = 0.9),  
+    vjust = -0.5,  
+    size = 3  
+  ) +
+  labs(
+    x = "Country",
+    y = "Engagement Favorability Score (%)",
+    title = "Engagement Factor Favorable Scores by Country (%)"
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  
   )
 ```
 
@@ -5540,6 +6081,48 @@ ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_sc
   scale_y_continuous(labels = percent_format(accuracy = 1))  
 
 
+#Desired order of question_number in reverse as I am making a horizontal graph
+desired_order <- c("eng_5", "eng_4", "eng_3", "eng_2", "eng_1", "eng")
+
+#Set the factor levels in reverse order
+engagement_favorable_scores$question_number <- factor(
+  engagement_favorable_scores$question_number,
+  levels = (desired_order)  # Reverse the desired order
+)
+
+#Distinguish the average row from other item rows
+engagement_favorable_scores$highlight <- ifelse(engagement_favorable_score_for_all$question_number == engagement_favorable_scores$question_number[1], "first", "other")
+
+
+
+
+#Color palette for highlighting
+highlight_colors <- c("first" = "#9A36B2",  # Purple for the 'first' category
+                      "other" = "#C9A5DD")  # light purple for the 'other' category
+
+#Create a horizontal bar plot with ggplot
+ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_score*100, fill = highlight)) +
+  geom_bar(stat = "identity", show.legend = FALSE) + 
+  coord_flip() +  
+  labs(
+    x = "Factor Items",  
+    y = "Favorability Score (%)", 
+    title = "Engagement Factor Favorable Scores for Employees in Germany",
+    caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all non-missing responses. Factor favorability score is an average of all the items for the factor."  
+  ) +
+  theme_minimal() + 
+  theme(
+    axis.text.y = element_text(size = 12),  
+    axis.text.x = element_text(size = 12), 
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14),
+  plot.caption = element_text(size = 6, hjust = 0)  
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score*100), "%")), 
+            hjust = -0.3,  
+            size = 4) +  
+  scale_fill_manual(values = highlight_colors)  
 ```
 <br>
 <br>
@@ -5992,9 +6575,57 @@ ggplot(tenure_df, aes(x = Tenure, y = Count, fill = Tenure)) +
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
     plot.caption = element_text(hjust = 1, face = "italic")  
   ) +
-  geom_text(aes(label = paste(Count)), vjust = -0.5, size = 3.5)  
+  geom_text(aes(label = paste(Count)), vjust = -0.5, size = 3)  
 ```
 
+<br>
+<br>
 
+### By tenure  & gender
 
+<br>
+<br>
+
+```{r}
+#by tenure & gender
+
+library(ggplot2)
+library(dplyr)
+
+#Create separate data frames for men and women by tenure group
+men_tenure_df <- as.data.frame(table(df_2$tenure_group[df_2$gender == "Male"]))
+women_tenure_df <- as.data.frame(table(df_2$tenure_group[df_2$gender == "Female"]))
+
+colnames(men_tenure_df) <- c("Tenure", "Count")
+colnames(women_tenure_df) <- c("Tenure", "Count")
+
+#Ensure the tenure groups are in the correct order
+tenure_levels <- c("Under 3 months", "3-6 months", "6-12 months", "1-2 years", "2-4 years", "4-6 years", "6-10 years", "10+ years")
+
+men_tenure_df$Tenure <- factor(men_tenure_df$Tenure, levels = tenure_levels)
+women_tenure_df$Tenure <- factor(women_tenure_df$Tenure, levels = tenure_levels)
+
+#Add a gender column to each data frame
+men_tenure_df$Gender <- "Men"
+women_tenure_df$Gender <- "Women"
+
+#Combine the two data frames
+combined_tenure_df <- rbind(men_tenure_df, women_tenure_df)
+
+#Create a bar plot comparing men and women by tenure group
+ggplot(combined_tenure_df, aes(x = Tenure, y = Count, fill = Gender)) +  
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  labs(
+    x = "Tenure Group",  
+    y = "Employee Count",  
+    title = "Employee Distribution by Tenure Group and Gender",
+    caption = "Total: 2651 employees"  
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(hjust = 1, face = "italic")  
+  ) +
+  geom_text(aes(label = Count), position = position_dodge(width = 0.9), vjust = -0.5, size = 3)  
 
