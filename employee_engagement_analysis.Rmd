@@ -1800,6 +1800,36 @@ ggplot(combined_favorability_scores, aes(x = question_number, y = favorability_s
   scale_fill_manual(  # Custom colors for gender
     values = c("Men" = "skyblue", "Women" = "purple", "All Employees" = "gray")
   )
+
+
+# Remove 'All Employees' from the data frame
+filtered_favorability_scores = combined_favorability_scores %>%
+  filter(gender != "All Employees")
+
+# Create a bar graph with ggplot2, only using data for 'Men' and 'Women'
+ggplot(filtered_favorability_scores, aes(x = question_number, y = favorability_score, fill = gender)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bars side-by-side
+  labs(
+    x = "Engagement Question",
+    y = "Favorability Score (%)",
+    title = "Engagement Favorability Scores by Gender",
+    caption = "Favorability score represents the percentage of respondents who agreed or strongly agreed with the question item over all responses."
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),  # Keep x-axis labels aligned
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 6, hjust = 0)  # Style the caption
+  ) +
+  geom_text(aes(label = paste0(round(favorability_score, 1), "%")),  # Add percentage labels
+            position = position_dodge(width = 0.9),
+            vjust = -0.5,
+            size = 3.5) +  # Adjust text size
+  scale_fill_manual(  # Custom colors for gender
+    values = c("Men" = "skyblue", "Women" = "purple")
+  )
+
+
 ```
 
 
@@ -5208,6 +5238,59 @@ ggplot(engagement_factor_correlation_table_kendall, aes(x = correlation, y = var
 <br>
 <br>
    
+### Statistical Significant testing between men and women
+<br>
+<br>
+```{r}
+#two sample t-test
+library(dplyr)
+
+# Separate the data into subsets for men and women
+men_engagement <- df_2 %>% filter(gender == "Male") %>% pull(engagement_factor)
+women_engagement <- df_2 %>% filter(gender == "Female") %>% pull(engagement_factor)
+
+# Conduct a two-sample t-test to compare the means of engagement factors between men and women
+t_test_result <- t.test(men_engagement, women_engagement, var.equal = TRUE)  # Assumes equal variance
+
+# Display the result of the t-test
+print(t_test_result)
+
+# Check if the difference is significant by examining the p-value
+if (t_test_result$p.value < 0.05) {
+  message("There is a statistically significant difference in engagement factor between men and women.")
+} else {
+  message("There is no statistically significant difference in engagement factor between men and women.")
+}
+
+#welch's t-test, relaxing equal variances between groups.
+welch_test_result <- t.test(men_engagement, women_engagement, var.equal = FALSE)  
+
+print(welch_test_result)
+
+#Mann-Whitney U test (wilcoxon Rank-SUm test)- non-parametric test
+mann_whitney_result <- wilcox.test(men_engagement, women_engagement)
+
+print(mann_whitney_result)
+#one way anova given that the DV is continuous and the IV is categorical
+anova_result <- aov(engagement_factor ~ gender, data = df_2)  # One-way ANOVA with gender as factor
+summary(anova_result)
+
+#robust OLS (accounting for heteroscedasticity--unequal variances, outliers, relaxes non-normality)
+
+# Load the MASS package for robust regression
+library(MASS)
+
+# Fit a robust regression model with the Huber method
+robust_model <- rlm(engagement_factor ~ gender, data = df_2)
+
+# Summary of the robust regression model
+summary(robust_model)
+```
+
+
+<br>
+<br>
+   
 ## Calculate Engagement & Leadership Factor Scores for All Countries.
 <br>
 <br>
@@ -5324,7 +5407,8 @@ ggplot(leadership_scores, aes(x = country, y = factor_favorable_score * 100, fil
   scale_y_continuous(labels = percent_format(scale = 1)) +
   theme_minimal() +
   theme(
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5), 
+    legend.position = "none"  
   )
 
 # Create ggplot for engagement scores
@@ -5344,7 +5428,8 @@ ggplot(engagement_scores, aes(x = country, y = factor_favorable_score * 100, fil
   scale_y_continuous(labels = percent_format(scale = 1)) +
   theme_minimal() +
   theme(
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+     legend.position = "none"  
   )
 ```
 
@@ -5446,6 +5531,7 @@ ggplot(consolidated_favorable_scores, aes(x = country, y = factor_favorable_scor
   theme_minimal() +
   theme(
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  legend.position = "none", 
     axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis labels for readability
   )
 
@@ -5535,7 +5621,8 @@ ggplot(consolidated_favorable_scores, aes(x = country, y = factor_favorable_scor
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),  
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+   legend.position = "none"  
   )
 ```
 
@@ -6409,9 +6496,17 @@ ggplot(engagement_favorable_scores, aes(x = question_number, y = favorability_sc
 ```{r}
 library(ggplot2)
 library(dplyr)
+library(scales)
 
 country_df <- as.data.frame(table(df_2$country))
 colnames(country_df) <- c("Country", "Count")
+
+
+total_employees <- sum(country_df$Count)
+
+country_df <- country_df %>%
+  mutate(Proportion = Count / total_employees)  # Add a column for proportions
+
 
 
 ##bar graph
@@ -6427,30 +6522,10 @@ ggplot(country_df, aes(x = Country, y = Count, fill = Country)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),  
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    plot.caption = element_text(hjust = 1, face = "italic")  
+    plot.caption = element_text(hjust = 1, face = "italic"),
+    legend.position = "none"  # This line hides the legend
   ) +
-  geom_text(aes(label = paste(Count)), vjust = -0.5, size = 3.5)  
-
-# Calculate the proportion of employees for each country
-country_df <- country_df %>%
-  mutate(Proportion = Count / sum(Count))  
-
-ggplot(country_df, aes(x = "", y = Proportion, fill = Country)) +
-  geom_bar(stat = "identity", width = 1) +  
-  coord_polar(theta = "y") + 
-  labs(
-    x = NULL, 
-    y = NULL,  
-    title = "Employee Distribution by Country (Percentage)"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_blank(),  
-    panel.grid = element_blank() 
-  ) +
-  geom_text(aes(label = paste(Country, scales::percent(Proportion, accuracy = 0.1))), 
-            position = position_stack(vjust = 0.5),  # Center text on each slice
-            size = 3)  
+  geom_text(aes(label = paste(Count)), vjust = -0.5, size = 3)  
 
 # barchart in percentage
 
@@ -6464,11 +6539,14 @@ ggplot(country_df, aes(x = Country, y = Proportion*100, fill = Country)) +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),  
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "none"
   ) +
   geom_text(aes(label = paste0(round(Proportion*100, 1), "%")),  
             vjust = -0.5, 
-            size = 3.5)  
+            size = 3)
+  
+
 ```
 
 <br>
